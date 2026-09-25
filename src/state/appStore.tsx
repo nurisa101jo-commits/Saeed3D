@@ -1,4 +1,4 @@
-import {createContext,useContext,useState} from 'react';
+import {createContext,useContext,useState,type ReactNode} from 'react';
 
 type AppStateValue = {
   clickThrough: boolean;
@@ -7,7 +7,7 @@ type AppStateValue = {
 
 const C=createContext<AppStateValue | null>(null);
 
-export function AppState({children}:{children:React.ReactNode}){
+export function AppState({children}:{children:ReactNode}){
   const [clickThrough,setClickThrough]=useState(false);
   return <C.Provider value={{clickThrough,setClickThrough}}>{children}</C.Provider>;
 }
