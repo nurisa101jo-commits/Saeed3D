@@ -1,7 +1,54 @@
 {
-  "name": "saeed",
-  "version": "0.1.0",
-  "description": "Saeed desktop AI 3D companion",
-  "main": "dist-electron/main.js",
-  "type": "module"
+  "name":"saeed",
+  "version":"0.1.0",
+  "description":"Saeed desktop AI 3D companion",
+  "main":"dist-electron/main.js",
+  "author":"Saeed Project",
+  "license":"MIT",
+  "type":"module",
+  "scripts":{
+    "dev":"concurrently -k \"vite --host 127.0.0.1\" \"wait-on http://127.0.0.1:5173 && electron .\"",
+    "build":"vite build && tsc -p electron/tsconfig.json",
+    "electron":"electron .",
+    "start":"electron .",
+    "package":"npm run build && electron-builder --win",
+    "package:zip":"npm run build && electron-builder --win zip",
+    "package:installer":"npm run build && electron-builder --win nsis",
+    "lint":"eslint .",
+    "typecheck":"tsc --noEmit && tsc -p electron/tsconfig.json --noEmit",
+    "test":"vitest run",
+    "verify-assets":"node scripts/verify-assets.mjs"
+  },
+  "dependencies":{
+    "@pixiv/three-vrm":"^3.4.0",
+    "@react-three/fiber":"^9.3.0",
+    "better-sqlite3":"^12.2.0",
+    "react":"^19.1.1",
+    "react-dom":"^19.1.1",
+    "three":"^0.180.0"
+  },
+  "devDependencies":{
+    "@types/react":"^19.1.10",
+    "@types/react-dom":"^19.1.7",
+    "@vitejs/plugin-react":"^5.0.2",
+    "concurrently":"^9.2.1",
+    "electron":"^37.4.0",
+    "electron-builder":"^26.0.12",
+    "eslint":"^9.35.0",
+    "typescript":"^5.9.2",
+    "vite":"^7.1.7",
+    "vitest":"^3.2.4",
+    "wait-on":"^8.0.4"
+  },
+  "build":{
+    "appId":"com.saeed.desktop",
+    "productName":"Saeed",
+    "directories":{"output":"release"},
+    "files":["dist/**","dist-electron/**","public/models/**","package.json"],
+    "asar":true,
+    "asarUnpack":["node_modules/better-sqlite3/**"],
+    "win":{"target":["nsis","zip"],"artifactName":"${productName}-${version}-${arch}.${ext}"},
+    "nsis":{"oneClick":false,"perMachine":false,"allowToChangeInstallationDirectory":true,"createDesktopShortcut":true,"createStartMenuShortcut":true},
+    "extraResources":[{"from":"public/models","to":"models"}]
+  }
 }
