@@ -1,0 +1,1 @@
+export class AudioPlayer{ctx=new AudioContext();async play(bytes:ArrayBuffer){const b=await this.ctx.decodeAudioData(bytes.slice(0));const s=this.ctx.createBufferSource();const a=this.ctx.createAnalyser();s.buffer=b;s.connect(a);a.connect(this.ctx.destination);s.start();return a}}
