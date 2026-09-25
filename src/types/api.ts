@@ -1,0 +1,2 @@
+export interface ChatRequest{profile:any;memoryContext:any[];recentMessages:any[];state:any;language:string;userMessage:string} export type LLMEvent={type:'message'|'done'|'error'|'avatar_cue';delta?:string;emotion?:string};
+export interface LLMProvider{chat(r:ChatRequest):AsyncIterable<LLMEvent>} export interface STTProvider{transcribe(audio:Blob,options?:any):Promise<string>} export interface TTSProvider{synthesize(text:string,options?:any):Promise<AudioResult>} export interface AudioResult{audio:ArrayBuffer;mimeType:string;}
