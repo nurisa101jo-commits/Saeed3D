@@ -1,0 +1,1 @@
+import type {VRM} from '@pixiv/three-vrm'; export function applyViseme(vrm:VRM,energy:number){const e=vrm.expressionManager;if(!e)return;for(const n of ['aa','ih','ou','ee','oh'])e.setValue(n,0);const n=energy<.12?'aa':energy<.3?'ih':energy<.5?'ee':energy<.7?'oh':'ou';e.setValue(n,Math.min(1,energy*1.5));}
