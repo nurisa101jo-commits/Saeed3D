@@ -1,0 +1,1 @@
+import fs from 'node:fs';import path from 'node:path';const p=path.resolve('public/models/saeed.vrm');if(!fs.existsSync(p))throw new Error('Missing public/models/saeed.vrm');const b=fs.readFileSync(p);if(b.subarray(0,4).toString()!=='glTF')throw new Error('Not a GLB/VRM');console.log(`Saeed VRM OK: ${(b.length/1048576).toFixed(1)} MB`);
