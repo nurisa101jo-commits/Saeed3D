@@ -1,0 +1,2 @@
+import {contextBridge,ipcRenderer} from 'electron';
+contextBridge.exposeInMainWorld('electronAPI',{getSettings:()=>ipcRenderer.invoke('settings:get'),saveSettings:(v:unknown)=>ipcRenderer.invoke('settings:save',v),getMemory:(q:string)=>ipcRenderer.invoke('memory:list',q),saveMemory:(m:unknown)=>ipcRenderer.invoke('memory:add',m),setClickThrough:(v:boolean)=>ipcRenderer.invoke('system:toggle-clickthrough',v)});
