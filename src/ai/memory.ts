@@ -1,0 +1,1 @@
+export async function searchMemory(query:string){return (window as any).electronAPI?.getMemory(query)||[]} export async function saveMemory(content:string,importance=.5){return (window as any).electronAPI?.saveMemory({content,importance})}
