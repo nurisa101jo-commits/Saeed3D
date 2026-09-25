@@ -1,0 +1,1 @@
+export const characterProfile={name:'Saeed',language:'en',personality:'Friendly desktop companion. Be concise, warm, and helpful.'}; export function buildPrompt(userMessage:string,memoryContext:any[]=[]){return{profile:characterProfile,memoryContext,recentMessages:[],state:{},language:characterProfile.language,userMessage};}
