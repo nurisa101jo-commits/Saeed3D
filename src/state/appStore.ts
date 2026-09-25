@@ -1,1 +1,0 @@
-import {createContext,useContext,useState} from 'react'; const C=createContext<any>(null); export function AppState({children}:{children:any}){const [clickThrough,setClickThrough]=useState(false);return <C.Provider value={{clickThrough,setClickThrough}}>{children}</C.Provider>} export const useAppState=()=>useContext(C);
