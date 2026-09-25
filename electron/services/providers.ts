@@ -58,7 +58,7 @@ export async function* streamLLM(provider:string,c:any,key:string,r:any):AsyncIt
 }
 
 export async function transcribeOpenAI(audio:Buffer,key:string,model='gpt-4o-mini-transcribe',language?:string){
-  const form=new FormData(); form.append('file',new Blob([audio],{type:'audio/webm'}),'speech.webm'); form.append('model',model); if(language)form.append('language',language);
+  const form=new FormData(); const bytes=new Uint8Array(audio); const ab=bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength) as ArrayBuffer; form.append('file',new Blob([ab],{type:'audio/webm'}),'speech.webm'); form.append('model',model); if(language)form.append('language',language);
   const r=await fetch('https://api.openai.com/v1/audio/transcriptions',{method:'POST',headers:{Authorization:'Bearer '+key},body:form});
   const t=await read(r); if(!r.ok)throw new Error(t); return json(t)?.text||'';
 }
