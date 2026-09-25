@@ -1,0 +1,3 @@
+declare global{interface Window{electronAPI:{
+ getSettings():Promise<any>;saveSettings(v:any):Promise<any>;testProvider(v:any):Promise<any>;sendChat(v:any):Promise<any>;transcribe(b:ArrayBuffer):Promise<string>;speak(t:string):Promise<string>;checkForUpdates():Promise<any>;installUpdate():Promise<any>;getUpdateState():Promise<any>;setClickThrough(v:boolean):Promise<any>;openPath(p:string):Promise<any>;onChatDelta(cb:(s:string)=>void):()=>void;onUpdate(cb:(s:any)=>void):()=>void;
+}}} export {};

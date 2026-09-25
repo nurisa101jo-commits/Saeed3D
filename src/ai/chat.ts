@@ -1,1 +1,4 @@
-import type {ChatRequest,LLMEvent,LLMProvider} from '../types/api'; export async function*localDemo(r:ChatRequest):AsyncIterable<LLMEvent>{const text=`Hello. You said: ${r.userMessage}`;for(const part of text.split(/(?<=\s)/)){await new Promise(x=>setTimeout(x,25));yield{type:'message',delta:part}}yield{type:'done'}} export class ConversationManager{constructor(private provider:LLMProvider={chat:localDemo as any}){} async run(r:ChatRequest,onDelta:(s:string)=>void){for await(const e of this.provider.chat(r)){if(e.type==='message')onDelta(e.delta||'')}}}
+import type {ChatRequest,LLMEvent} from '../types/api';
+export class ConversationManager{async run(r:ChatRequest,onDelta:(s:string)=>void){let full='';const off=window.electronAPI.onChatDelta(d=>{full+=d;onDelta(d)});try{await window.electronAPI.sendChat(r);return full}finally{off()}}}
+export async function runCommand(text:string){const m=text.match(/^(?:please\s+)?open\s+(.+)$/i);if(!m)return false;await window.electronAPI.openPath(m[1].trim());return true}
+export type {LLMEvent};
