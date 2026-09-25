@@ -1,0 +1,1 @@
+import {useAppState} from '../../state/appStore'; export function Controls(){const {clickThrough,setClickThrough}=useAppState();return <div className="controls"><button onClick={()=>setClickThrough(!clickThrough)}>{clickThrough?'Enable interaction':'Click-through'}</button></div>}
