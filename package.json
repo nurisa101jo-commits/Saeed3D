@@ -1,0 +1,7 @@
+{
+  "name": "saeed",
+  "version": "0.1.0",
+  "description": "Saeed desktop AI 3D companion",
+  "main": "dist-electron/main.js",
+  "type": "module"
+}
