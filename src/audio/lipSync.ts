@@ -1,0 +1,1 @@
+import type {VRM} from '@pixiv/three-vrm'; import {applyViseme} from '../avatar/visemes'; export class LipSync{constructor(private vrm:VRM){} update(analyser:AnalyserNode){const a=new Uint8Array(analyser.fftSize);analyser.getByteTimeDomainData(a);let s=0;for(const v of a){const d=(v-128)/128;s+=d*d}applyViseme(this.vrm,Math.sqrt(s/a.length)*3)}}
