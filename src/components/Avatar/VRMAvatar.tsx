@@ -25,51 +25,56 @@ export function VRMAvatar(){
 
     const loader=new GLTFLoader();
     loader.register(p=>new VRMLoaderPlugin(p));
-
     let vrm:VRM|undefined;
+    let cancelled=false;
 
     function fit(){
       if(!vrm||!host)return;
       const box=new THREE.Box3().setFromObject(vrm.scene);
       if(box.isEmpty())return;
-
       const size=box.getSize(new THREE.Vector3());
       const center=box.getCenter(new THREE.Vector3());
       const h=Math.max(size.y,0.1);
       const fov=THREE.MathUtils.degToRad(camera.fov);
       const dist=(h*0.62)/Math.tan(fov/2);
-
       camera.position.set(center.x,center.y+h*0.03,center.z+dist);
       camera.lookAt(center.x,center.y+h*0.03,center.z);
       camera.aspect=Math.max(0.1,host.clientWidth/Math.max(1,host.clientHeight));
       camera.updateProjectionMatrix();
     }
 
-    // Resolve the asset relative to the packaged renderer page. This works
-    // with both Vite dev mode and the Electron file:// production build.
-    const modelUrl=new URL('./models/saeed.vrm',window.location.href).href;
+    const show=(g:any)=>{
+      if(cancelled)return;
+      const loaded=g.userData.vrm as VRM|undefined;
+      if(!loaded){console.error('[Saeed] VRM plugin returned no VRM',g);return;}
+      vrm=loaded;
+      vrm.scene.visible=true;
+      vrm.scene.rotation.y=Math.PI;
+      scene.add(vrm.scene);
+      setEmotion(vrm,'neutral');
+      fit();
+      console.info('[Saeed] VRM rendered successfully');
+    };
 
-    loader.load(
-      modelUrl,
-      g=>{
-        const loaded=g.userData.vrm as VRM|undefined;
-        if(!loaded){
-          console.error('[Saeed] VRM plugin did not produce a VRM object',g);
-          return;
-        }
-        vrm=loaded;
-        vrm.scene.visible=true;
-        vrm.scene.rotation.y=Math.PI;
-        scene.add(vrm.scene);
-        setEmotion(vrm,'neutral');
-        fit();
-        console.info('[Saeed] VRM loaded successfully:',modelUrl);
-      },
-      undefined,
-      err=>{
-        console.error('[Saeed] Failed to load VRM:',modelUrl,err);
-      }
-    );
+    const fail=(e:unknown)=>{
+      if(!cancelled)console.error('[Saeed] VRM load failed:',e);
+    };
+
+    // Packaged Electron builds load the model through the main process.
+    // This avoids file:// / ASAR path restrictions in the renderer.
+    const api=(window as any).electronAPI;
+    if(api?.loadAvatarModel){
+      api.loadAvatarModel()
+        .then((data:Uint8Array)=>{
+          if(cancelled)return;
+          const bytes=data instanceof Uint8Array?data:new Uint8Array(data);
+          loader.parse(bytes.buffer,'',show,fail);
+        })
+        .catch(fail);
+    }else{
+      const url=new URL('./models/saeed.vrm',window.location.href).href;
+      loader.load(url,show,undefined,fail);
+    }
 
     const ro=new ResizeObserver(()=>{
       renderer.setSize(Math.max(1,host.clientWidth),Math.max(1,host.clientHeight));
@@ -86,6 +91,7 @@ export function VRMAvatar(){
     loop();
 
     return()=>{
+      cancelled=true;
       cancelAnimationFrame(id);
       ro.disconnect();
       renderer.dispose();
