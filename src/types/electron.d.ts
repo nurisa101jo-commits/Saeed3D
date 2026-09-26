@@ -15,11 +15,15 @@ declare global {
       setClickThrough(v:boolean): Promise<any>;
       openPath(p:string): Promise<any>;
       setBrainMode(v:'auto'|'local'|'api'): Promise<string>;
+      setMicMode(v:'always'|'push-to-talk'|'off'): Promise<string>;
       clearApiKeys(scope?:'all'|'llm'|'stt'|'tts'): Promise<boolean>;
       moveWindowBy(dx:number,dy:number): Promise<boolean>;
+      closeSettingsWindow(): Promise<boolean>;
       onChatDelta(cb:(s:string)=>void): ()=>void;
       onUpdate(cb:(s:any)=>void): ()=>void;
       onOpenSettings(cb:()=>void): ()=>void;
+      onOpenChat(cb:()=>void): ()=>void;
+      onMicMode(cb:(s:'always'|'push-to-talk'|'off')=>void): ()=>void;
       onChangeCharacter(cb:()=>void): ()=>void;
       onAvatarChanged(cb:()=>void): ()=>void;
     };
