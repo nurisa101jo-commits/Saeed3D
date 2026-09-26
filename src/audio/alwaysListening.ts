@@ -8,7 +8,7 @@ private async ensureStream(){
 }
 async start(onUtterance:(b:Blob)=>Promise<void>){
   this.callback=onUtterance;await this.ensureStream();
-  const analyser=new AudioContext();const src=analyser.createMediaStreamSource(this.stream);const a=analyser.createAnalyser();a.fftSize=1024;src.connect(a);const data=new Uint8Array(a.fftSize);
+  const stream=this.stream;if(!stream)throw new Error('Microphone stream is unavailable');const analyser=new AudioContext();const src=analyser.createMediaStreamSource(stream);const a=analyser.createAnalyser();a.fftSize=1024;src.connect(a);const data=new Uint8Array(a.fftSize);
   const loop=()=>{a.getByteTimeDomainData(data);let sum=0;for(const v of data){const d=(v-128)/128;sum+=d*d}const rms=Math.sqrt(sum/data.length);const now=performance.now();if(rms>.035){this.speech=true;this.lastVoice=now;if(!this.recording)this.begin()}else if(this.recording&&this.speech&&now-this.lastVoice>900)this.finish();this.timer=requestAnimationFrame(loop)};loop();
 }
 async startManual(onUtterance:(b:Blob)=>Promise<void>){
