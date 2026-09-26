@@ -1,6 +1,6 @@
 {
   "name": "saeed",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Saeed desktop AI 3D companion",
   "main": "dist-electron/main.js",
   "author": "Saeed Project",
@@ -21,6 +21,7 @@
     "verify-assets": "node scripts/verify-assets.mjs"
   },
   "dependencies": {
+    "electron-updater": "^6.6.2",
     "@pixiv/three-vrm": "^3.4.0",
     "@react-three/fiber": "^9.3.0",
     "better-sqlite3": "^12.2.0",
@@ -35,7 +36,6 @@
     "concurrently": "^9.2.1",
     "electron": "^37.4.0",
     "electron-builder": "^26.0.12",
-    "electron-updater": "^6.6.2",
     "eslint": "^9.35.0",
     "typescript": "^5.9.2",
     "vite": "^7.1.7",
