@@ -21,6 +21,7 @@ declare global {
       installUpdate(): Promise<any>;
       getUpdateState(): Promise<any>;
       setClickThrough(v:boolean): Promise<any>;
+      onClickThroughState?(cb:(v:boolean)=>void):()=>void;
       assistantTool(q:string): Promise<string>;
       openPath(p:string): Promise<any>;
       setBrainMode(v:'auto'|'local'|'api'): Promise<string>;
