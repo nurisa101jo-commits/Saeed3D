@@ -1,8 +1,8 @@
-import {app,BrowserWindow,Menu,Notification,Tray,nativeImage} from 'electron';
+import {app,BrowserWindow,Menu,Notification,Tray,nativeImage,dialog} from 'electron';
 import electronUpdater from 'electron-updater';
 import {revealCompanionWindow} from '../windows/companionWindow.js';
 const {autoUpdater}=electronUpdater;
-import path from 'node:path'; import {fileURLToPath} from 'node:url';
+import path from 'node:path'; import fs from 'node:fs'; import {fileURLToPath} from 'node:url';
 
 type U={state:string;version?:string;percent?:number;transferred?:number;total?:number;message?:string};
 let tray:Tray|undefined;let win:BrowserWindow|undefined;let state:U={state:'idle'};
@@ -12,7 +12,14 @@ function emit(){if(win&&!win.isDestroyed()&&win.webContents&&!win.webContents.is
 function set(s:U){state=s;emit();tray?.setToolTip('Saeed — '+(s.message||s.state))}
 function reveal(){if(win&&!win.isDestroyed())revealCompanionWindow(win)}
 function openSettings(){reveal();if(win&&!win.isDestroyed()&&!win.webContents.isDestroyed())win.webContents.send('ui:open-settings')}
-function changeCharacter(){reveal();if(win&&!win.isDestroyed()&&!win.webContents.isDestroyed())win.webContents.send('ui:change-character')}
+async function changeCharacter(){
+  reveal();
+  const result=await dialog.showOpenDialog(win&&!win.isDestroyed()?win:undefined,{title:'Choose Saeed Character',properties:['openFile'],filters:[{name:'VRM Character',extensions:['vrm']}]});
+  if(result.canceled||!result.filePaths[0])return;
+  const destination=path.join(app.getPath('userData'),'character.vrm');
+  fs.copyFileSync(result.filePaths[0],destination);
+  if(win&&!win.isDestroyed()&&!win.webContents.isDestroyed())win.webContents.send('avatar:model-changed');
+}
 
 export function setupUpdater(w:BrowserWindow){
   win=w;
@@ -23,7 +30,7 @@ export function setupUpdater(w:BrowserWindow){
   tray.setToolTip('Saeed');
   tray.setContextMenu(Menu.buildFromTemplate([
     {label:'Show Saeed',click:()=>reveal()},
-    {label:'Change Character',click:()=>changeCharacter()},
+    {label:'Change Character',click:()=>{void changeCharacter()}},
     {label:'Settings',click:()=>openSettings()},
     {label:'Check for updates',click:()=>{reveal();void check()}},
     {label:'Install downloaded update',enabled:false},
