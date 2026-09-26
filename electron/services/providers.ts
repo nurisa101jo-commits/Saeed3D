@@ -38,7 +38,7 @@ export async function testLLM(provider:string,c:Config,key:string|null):Promise<
 }
 
 function messages(r:any){return [...(r.recentMessages||[]).map((m:any)=>({role:m.role==='assistant'?'assistant':'user',content:m.content})),{role:'user',content:r.userMessage}]}
-function prompt(r:any){return 'You are Saeed, a helpful desktop AI companion. Be concise and conversational. Language: '+(r.language||'en')+'\nMemory:\n'+JSON.stringify(r.memoryContext||[])+'\nUser: '+r.userMessage}
+function prompt(r:any){return 'You are Saeed, a helpful desktop AI companion. Be concise, direct and conversational. Do not repeat yourself. Use the available desktop-tool result when one is supplied. Language: '+(r.language||'en')+'\nMemory:\n'+JSON.stringify(r.memoryContext||[])}
 async function* sse(res:Response, parser:(obj:any)=>string|undefined):AsyncIterable<string>{
   if(!res.body) return; const reader=res.body.getReader(); const dec=new TextDecoder(); let buf='';
   while(true){const {done,value}=await reader.read(); if(done)break; buf+=dec.decode(value,{stream:true}); const parts=buf.split(/\n\n/); buf=parts.pop()||''; for(const p of parts){for(const line of p.split('\n')){if(!line.startsWith('data:'))continue; const d=line.slice(5).trim(); if(!d||d==='[DONE]')continue; try{const v=parser(JSON.parse(d));if(v)yield v}catch{}}}}
