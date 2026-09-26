@@ -52,7 +52,7 @@ export function createCompanionWindow(root:string){
     show:true,
     paintWhenInitiallyHidden:true,
     webPreferences:{
-      preload:path.join(root,'preload.js'),
+      preload:path.join(root,'preload.mjs'),
       nodeIntegration:false,
       contextIsolation:true,
       sandbox:false,
