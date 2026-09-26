@@ -71,9 +71,17 @@ export function VRMAvatar(){
           if(!next)throw new Error('VRM plugin did not create a model');
           disposeModel(vrm);
           vrm=next;
-          // VRM's canonical forward is -Z and the camera is placed on +Z looking toward the model.
-          // Do not rotate the model 180°: that makes the avatar show its back.
+          // Keep the default orientation, but automatically correct VRMs authored facing away from the camera.
+          // The normalized head bone's local -Z is the face-forward direction in standard VRM rigs.
           vrm.scene.rotation.y=0;
+          const head=vrm.humanoid?.getNormalizedBoneNode('head');
+          if(head){
+            const forward=new THREE.Vector3();
+            const toCamera=new THREE.Vector3();
+            head.getWorldDirection(forward);
+            toCamera.copy(camera.position).sub(head.getWorldPosition(new THREE.Vector3())).normalize();
+            if(forward.dot(toCamera)<-0.15)vrm.scene.rotation.y=Math.PI;
+          }
           scene.add(vrm.scene);
           setEmotion(vrm,'neutral');
           fitCamera(vrm);
