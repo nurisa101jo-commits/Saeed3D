@@ -11,6 +11,8 @@ const root=path.dirname(fileURLToPath(import.meta.url));
 function emit(){if(win&&!win.isDestroyed()&&win.webContents&&!win.webContents.isDestroyed())win.webContents.send('update:status',state)}
 function set(s:U){state=s;emit();tray?.setToolTip('Saeed — '+(s.message||s.state))}
 function reveal(){if(win&&!win.isDestroyed())revealCompanionWindow(win)}
+function openSettings(){reveal();if(win&&!win.isDestroyed()&&!win.webContents.isDestroyed())win.webContents.send('ui:open-settings')}
+function changeCharacter(){reveal();if(win&&!win.isDestroyed()&&!win.webContents.isDestroyed())void win.webContents.executeJavaScript('window.electronAPI?.changeAvatarModel?.()').catch(()=>{})}
 
 export function setupUpdater(w:BrowserWindow){
   win=w;
@@ -21,6 +23,8 @@ export function setupUpdater(w:BrowserWindow){
   tray.setToolTip('Saeed');
   tray.setContextMenu(Menu.buildFromTemplate([
     {label:'Show Saeed',click:()=>reveal()},
+    {label:'Change Character',click:()=>changeCharacter()},
+    {label:'Settings',click:()=>openSettings()},
     {label:'Check for updates',click:()=>{reveal();void check()}},
     {label:'Install downloaded update',enabled:false},
     {type:'separator'},
