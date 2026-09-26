@@ -63,16 +63,6 @@ jobs:
           Get-ChildItem -Path $ttsModel -File | Where-Object { $_.Name -ne "en_US-lessac-medium.onnx" -and $_.Name -ne "tokens.txt" } | Remove-Item -Force
           Get-ChildItem -Path $ttsModel -Directory | Where-Object { $_.Name -ne "espeak-ng-data" } | Remove-Item -Recurse -Force
 
-      - name: Generate Saeed application icon
-        shell: pwsh
-        run: |
-          $svg = Get-Content -Raw -Path "public/icons/saeed-icon.svg"
-          $match = [regex]::Match($svg, 'base64,([^\"]+)')
-          if (!$match.Success) { throw "Saeed icon source does not contain an embedded PNG" }
-          [IO.File]::WriteAllBytes("public/icons/saeed.png", [Convert]::FromBase64String($match.Groups[1].Value))
-          if (!(Test-Path "public/icons/saeed.png")) { throw "Saeed PNG icon was not generated" }
-          Write-Host "Generated public/icons/saeed.png"
-
       - name: Verify VRM
         run: npm run verify-assets
 
