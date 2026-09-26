@@ -119,10 +119,12 @@ function wavBuffer(samples:Float32Array,sampleRate:number){
   const b=Buffer.alloc(44+pcm.byteLength);b.write('RIFF',0);b.writeUInt32LE(36+pcm.byteLength,4);b.write('WAVE',8);b.write('fmt ',12);b.writeUInt32LE(16,16);b.writeUInt16LE(1,20);b.writeUInt16LE(1,22);b.writeUInt32LE(sampleRate,24);b.writeUInt32LE(sampleRate*2,28);b.writeUInt16LE(2,32);b.writeUInt16LE(16,34);b.write('data',36);b.writeUInt32LE(pcm.byteLength,40);Buffer.from(pcm.buffer,pcm.byteOffset,pcm.byteLength).copy(b,44);return b;
 }
 export async function synthesizeOffline(text:string,modelRoot:string,c:any={}){
-  const model=path.join(modelRoot,c.modelFile||'en_US-lessac-medium.onnx');
-  const tokens=path.join(modelRoot,c.tokensFile||'tokens.txt');
-  const dataDir=path.join(modelRoot,c.dataDir||'espeak-ng-data');
-  if(!fs.existsSync(model)||!fs.statSync(model).isFile()||!fs.existsSync(tokens)||!fs.statSync(tokens).isFile()||!fs.existsSync(dataDir)||!fs.statSync(dataDir).isDirectory())throw new Error('Offline TTS model is not installed. Expected model files at: '+modelRoot);
+  let model=path.join(modelRoot,c.modelFile||'en_US-lessac-medium.onnx');
+  const fallback=path.join(modelRoot,'en_US-lessac-medium.onnx');
+  if((!fs.existsSync(model)||!fs.statSync(model).isFile())&&fs.existsSync(fallback))model=fallback;
+  const tokens=path.join(modelRoot,'tokens.txt');
+  const dataDir=path.join(modelRoot,'espeak-ng-data');
+  if(!fs.existsSync(model)||!fs.statSync(model).isFile()||!fs.existsSync(tokens)||!fs.statSync(tokens).isFile()||!fs.existsSync(dataDir)||!fs.statSync(dataDir).isDirectory())throw new Error('Offline TTS model is not installed. Expected '+model+' plus tokens.txt and espeak-ng-data under '+modelRoot);
   if(!offlineTts||offlineTtsRoot!==modelRoot){
     const sherpa=require('sherpa-onnx-node');
     offlineTts=new sherpa.OfflineTts({model:{vits:{model,tokens,dataDir},numThreads:Math.max(1,Math.min(4,(require('node:os').cpus()?.length||2)-1)),provider:'cpu'},maxNumSentences:1,silenceScale:0.2});
