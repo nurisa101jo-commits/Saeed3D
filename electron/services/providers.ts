@@ -32,7 +32,7 @@ export async function testLLM(provider:string,c:Config,key:string|null):Promise<
     }
     const base=(c.baseUrl||'').replace(/\/$/,'');
     if(!base)return {provider,status:'error',message:'Base URL is required'};
-    const r=await fetch(base+'/chat/completions',{method:'POST',headers:{Authorization:'Bearer '+key,'Content-Type':'application/json'},body:JSON.stringify({model:c.model||'model',messages:[{role:'user',content:'Reply with OK only.'}],max_tokens:4})});
+    const r=await fetch(base+'/chat/completions',{method:'POST',headers:{Authorization:'Bearer '+key,'Content-Type':'application/json'},body:JSON.stringify({model:c.model||'model',messages:[{role:'user',content:'Reply with OK only.'}],max_tokens:16})});
     const b=await read(r); return r.ok?{provider,status:'connected',message:'OpenAI-compatible API connection is working'}:{provider,status:classify(r.status,b),message:b,httpStatus:r.status};
   }catch(e){return {provider,status:'error',message:String(e)}}
 }
