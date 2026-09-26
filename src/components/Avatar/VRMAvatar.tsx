@@ -118,8 +118,16 @@ export function VRMAvatar(){
     let id=0;
     const loop=()=>{
       id=requestAnimationFrame(loop);
-      if(vrm)vrm.update(1/60);
-      renderer.render(scene,camera);
+      try{
+        if(vrm)vrm.update(1/60);
+        renderer.render(scene,camera);
+      }catch(e){
+        console.error('[Saeed] 3D render loop failed:',e);
+        setStatus('3D error: '+(e instanceof Error?e.message:String(e)));
+        vrm=undefined;
+        try{renderer.dispose()}catch{}
+        cancelAnimationFrame(id);
+      }
     };
     loop();
 
