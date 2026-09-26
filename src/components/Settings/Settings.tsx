@@ -5,6 +5,11 @@ const providers=[['openai','OpenAI / GPT'],['anthropic','Anthropic / Claude'],['
 export function Settings(){
  const[open,setOpen]=useState(false);const[s,setS]=useState<S>(defaults);const[has,setHas]=useState<any>({});const[llmKey,setLlmKey]=useState('');const[ttsKey,setTtsKey]=useState('');const[status,setStatus]=useState<any>({});
  useEffect(()=>{window.electronAPI.getSettings().then(x=>{setS({...defaults,...x.config,llm:{...defaults.llm,...x.config?.llm},tts:{...defaults.tts,...x.config?.tts}});setHas(x.hasSecrets||{})})},[]);
+ useEffect(()=>{
+   const removeSettings=window.electronAPI.onOpenSettings(()=>setOpen(true));
+   const removeCharacter=window.electronAPI.onChangeCharacter(()=>{void window.electronAPI.changeAvatarModel()});
+   return()=>{removeSettings();removeCharacter()};
+ },[]);
  async function save(){const secrets:any={};if(llmKey.trim())secrets[s.llmProvider]=llmKey;if(ttsKey.trim())secrets[s.ttsProvider==='azure'?'azure':'openai']=ttsKey;await window.electronAPI.saveSettings({...s,secrets});setLlmKey('');setTtsKey('');setHas((x:any)=>({...x,...Object.fromEntries(Object.keys(secrets).map(k=>[k,true]))}))}
  async function testLLM(){const r=await window.electronAPI.testProvider({provider:s.llmProvider,config:s.llm});setStatus((x:any)=>({...x,llm:r}))}
  async function testTTS(){const p=s.ttsProvider==='azure'?'azure':'openai-tts';const r=await window.electronAPI.testProvider({provider:p,config:s.tts});setStatus((x:any)=>({...x,tts:r}))}
