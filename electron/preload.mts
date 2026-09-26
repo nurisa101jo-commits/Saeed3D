@@ -19,7 +19,7 @@ contextBridge.exposeInMainWorld('electronAPI',{
   checkForUpdates:()=>ipcRenderer.invoke('update:check'),
   installUpdate:()=>ipcRenderer.invoke('update:install'),
   getUpdateState:()=>ipcRenderer.invoke('update:state'),
-  setClickThrough:(v:boolean)=>ipcRenderer.invoke('system:toggle-clickthrough',v),
+  setClickThrough:(v:boolean)=>ipcRenderer.invoke('system:toggle-clickthrough',v),onClickThroughState:(cb:(v:boolean)=>void)=>{const f=(_:unknown,v:boolean)=>cb(v);ipcRenderer.on('system:clickthrough-state',f);return()=>ipcRenderer.removeListener('system:clickthrough-state',f)},
   assistantTool:(q:string)=>ipcRenderer.invoke('assistant:tool',q),
   openPath:(p:string)=>ipcRenderer.invoke('system:open',p),
   setBrainMode:(v:'auto'|'local'|'api')=>ipcRenderer.invoke('settings:brain-mode',v),
