@@ -53,7 +53,8 @@ export function Settings({standalone=false}:{standalone?:boolean}){
   async function ok(){await apply();window.electronAPI.closeSettingsWindow();}
   function cancel(){window.electronAPI.closeSettingsWindow();}
 
-  async function clearKeys(scope:'all'|'llm'|'stt'|'tts'){await window.electronAPI.clearApiKeys(scope);const x=await window.electronAPI.getSettings();setHas(x.hasSecrets||{});setStatus((v:any)=>({...v,keys:scope==='all'?'All API keys cleared':scope.toUpperCase()+' API keys cleared'}));}\n  async function clearAllKeys(){
+  async function clearKeys(scope:'all'|'llm'|'stt'|'tts'){await window.electronAPI.clearApiKeys(scope);const x=await window.electronAPI.getSettings();setHas(x.hasSecrets||{});setStatus((v:any)=>({...v,keys:scope==='all'?'All API keys cleared':scope.toUpperCase()+' API keys cleared'}));}
+  async function clearAllKeys(){
     await window.electronAPI.clearApiKeys('all');setLlmKey('');setSttKey('');setTtsKey('');
     const x=await window.electronAPI.getSettings();setHas(x.hasSecrets||{});
     setStatus((v:any)=>({...v,keys:'All API keys have been cleared from secure storage'}));
@@ -93,7 +94,9 @@ export function Settings({standalone=false}:{standalone?:boolean}){
     <hr/><h4>TTS — Text to Speech</h4>
     <label>TTS provider<select value={s.ttsProvider} onChange={e=>setS({...s,ttsProvider:e.target.value as S['ttsProvider']})}><option value="local">Local TTS — offline</option><option value="openai">OpenAI TTS — API</option><option value="azure">Azure Speech — API</option></select></label>
     {ttsFields}<div className="settingActions"><button onClick={testTTS}>Test TTS</button></div><div className="status">TTS: {status.tts?.status||'not tested'} {status.tts?.message||''}</div>
-    <hr/><h4>Microphone & Voice</h4>\n    <label>Voice profile<select value={s.voiceProfile} onChange={e=>setS({...s,voiceProfile:e.target.value as S['voiceProfile']})}><option value="saeed">Saeed voice</option><option value="computer">Computer voice</option><option value="female">Female voice</option><option value="clone">My cloned voice</option></select></label>\n    <div className="status">Saeed uses the selected provider/model. My cloned voice becomes active when a compatible clone model is installed and selected.</div>
+    <hr/><h4>Microphone & Voice</h4>
+    <label>Voice profile<select value={s.voiceProfile} onChange={e=>setS({...s,voiceProfile:e.target.value as S['voiceProfile']})}><option value="saeed">Saeed voice</option><option value="computer">Computer voice</option><option value="female">Female voice</option><option value="clone">My cloned voice</option></select></label>
+    <div className="status">Saeed uses the selected provider/model. My cloned voice becomes active when a compatible clone model is installed and selected.</div>
     <label>Microphone mode<select value={s.micMode} onChange={e=>setS({...s,micMode:e.target.value as S['micMode'],alwaysListening:e.target.value==='always'})}><option value="always">Always listening</option><option value="push-to-talk">Push to talk (hold Space)</option><option value="off">Close microphone</option></select></label>
     <label><input type="checkbox" checked={s.showSpeechText} onChange={e=>setS({...s,showSpeechText:e.target.checked})}/> Show speech text</label>
     <label><input type="checkbox" checked={s.speakResponses} onChange={e=>setS({...s,speakResponses:e.target.checked})}/> Speak Saeed's responses</label>
