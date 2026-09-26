@@ -2,13 +2,13 @@ import {useEffect,useState} from 'react';
 
 type S={
   llmProvider:string;llm:any;sttProvider:'local'|'openai';sttModel:string;sttLanguage:string;
-  ttsProvider:'local'|'openai'|'azure';tts:any;voiceProfile:'saeed'|'computer'|'female'|'clone';language:string;alwaysListening:boolean;
+  ttsProvider:'local'|'openai'|'azure';tts:any;voiceProfile:'male'|'female'|'clone';language:string;alwaysListening:boolean;
   micMode:'always'|'push-to-talk'|'off';
   brainMode:'auto'|'local'|'api';showSpeechText:boolean;speakResponses:boolean;
 };
 const defaults:S={
   llmProvider:'openai',llm:{model:'gpt-5'},sttProvider:'local',sttModel:'gpt-4o-mini-transcribe',
-  sttLanguage:'en',ttsProvider:'local',tts:{model:'gpt-4o-mini-tts',voice:'alloy',modelFile:'en_US-lessac-medium.onnx',tokensFile:'tokens.txt',dataDir:'espeak-ng-data',speed:1,sid:0},voiceProfile:'saeed',
+  sttLanguage:'en',ttsProvider:'local',tts:{model:'gpt-4o-mini-tts',voice:'cedar',modelFile:'en_US-ryan-medium.onnx',tokensFile:'tokens.txt',dataDir:'espeak-ng-data',speed:1,sid:0},voiceProfile:'male',
   language:'en',alwaysListening:true,micMode:'always',brainMode:'auto',showSpeechText:false,speakResponses:true
 };
 const providers=[['openai','OpenAI / GPT'],['anthropic','Anthropic / Claude'],['gemini','Google / Gemini'],['openai-compatible','OpenAI-compatible']];
@@ -23,7 +23,7 @@ export function Settings({standalone=false}:{standalone?:boolean}){
 
   useEffect(()=>{
     window.electronAPI.getSettings().then(x=>{
-      const cfg={...defaults,...x.config};
+      const cfg={...defaults,...x.config,voiceProfile:x.config?.voiceProfile==='female'?'female':x.config?.voiceProfile==='clone'?'clone':'male'};
       const micMode=(x.config?.micMode||(x.config?.alwaysListening===false?'off':'always')) as S['micMode'];
       setS({...cfg,micMode,llm:{...defaults.llm,...x.config?.llm},tts:{...defaults.tts,...x.config?.tts}});
       setHas(x.hasSecrets||{});
@@ -97,8 +97,7 @@ export function Settings({standalone=false}:{standalone?:boolean}){
     <label>TTS provider<select value={s.ttsProvider} onChange={e=>setS({...s,ttsProvider:e.target.value as S['ttsProvider']})}><option value="local">Local TTS — offline</option><option value="openai">OpenAI TTS — API</option><option value="azure">Azure Speech — API</option></select></label>
     {ttsFields}<div className="settingActions"><button onClick={testTTS}>Test TTS</button></div><div className="status">TTS: {status.tts?.status||'not tested'} {status.tts?.message||''}</div>
     </div>}{tab==='interaction'&&<div className="settingsTabContent"><h4>Microphone & Voice</h4>
-    <label>Voice profile<select value={s.voiceProfile} onChange={e=>setS({...s,voiceProfile:e.target.value as S['voiceProfile']})}><option value="saeed">Saeed voice</option><option value="computer">Computer voice</option><option value="female">Female voice</option><option value="clone">My cloned voice</option></select></label>
-    <div className="status">Saeed uses the selected provider/model. My cloned voice becomes active when a compatible clone model is installed and selected.</div>
+    <div className="voiceProfileGrid"><button className={s.voiceProfile==='male'?'selected':''} onClick={()=>setS({...s,voiceProfile:'male'})}>♂ Male — Saeed</button><button className={s.voiceProfile==='female'?'selected':''} onClick={()=>setS({...s,voiceProfile:'female'})}>♀ Female</button><button className={s.voiceProfile==='clone'?'selected':''} onClick={()=>setS({...s,voiceProfile:'clone'})}>🎙 Add clone voice</button></div><div className="status">Saeed's default voice is male. Male and female profiles use separate voices; clone accepts a compatible ONNX voice model.</div>{s.voiceProfile==='clone'&&<div className="settingActions"><button onClick={async()=>{const r=await window.electronAPI.chooseCloneVoice();if(r.changed)setStatus((x:any)=>({...x,voice:'Clone voice model added'}));}}>Choose clone voice model</button></div>}
     <label>Microphone mode<select value={s.micMode} onChange={e=>setS({...s,micMode:e.target.value as S['micMode'],alwaysListening:e.target.value==='always'})}><option value="always">Always listening</option><option value="push-to-talk">Push to talk (hold Space)</option><option value="off">Close microphone</option></select></label>
     <label><input type="checkbox" checked={s.showSpeechText} onChange={e=>setS({...s,showSpeechText:e.target.checked})}/> Show speech text</label>
     <label><input type="checkbox" checked={s.speakResponses} onChange={e=>setS({...s,speakResponses:e.target.checked})}/> Speak Saeed's responses</label>
