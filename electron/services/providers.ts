@@ -127,7 +127,7 @@ export async function synthesizeOffline(text:string,modelRoot:string,c:any={}){
     offlineTts=new sherpa.OfflineTts({model:{vits:{model,tokens,dataDir},numThreads:Math.max(1,Math.min(4,(require('node:os').cpus()?.length||2)-1)),provider:'cpu'},maxNumSentences:1,silenceScale:0.2});
     offlineTtsRoot=modelRoot;
   }
-  const GenerationConfig=sherpa.GenerationConfig; const gc=new GenerationConfig({sid:Number(c.sid||0),speed:Number(c.speed||1),silenceScale:Number(c.silenceScale||0.2)});
+  const GenerationConfig=require('sherpa-onnx-node').GenerationConfig; const gc=new GenerationConfig({sid:Number(c.sid||0),speed:Number(c.speed||1),silenceScale:Number(c.silenceScale||0.2)});
   const audio=await offlineTts.generateAsync({text,generationConfig:gc});
   return wavBuffer(audio.samples,audio.sampleRate);
 }
