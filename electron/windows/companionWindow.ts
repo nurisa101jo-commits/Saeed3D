@@ -68,6 +68,9 @@ export function createCompanionWindow(root:string){
   win.on('hide',()=>console.log('[Saeed] companion window hidden'));
   win.on('closed',()=>console.log('[Saeed] companion window closed'));
   win.on('unresponsive',()=>console.error('[Saeed] renderer became unresponsive'));
+  win.webContents.on('preload-error',(_e,preloadPath,error)=>{
+    console.error('[Saeed] preload failed:',preloadPath,error);
+  });
   win.webContents.on('render-process-gone',(_e,details)=>{
     console.error('[Saeed] renderer process gone:',details.reason,details.exitCode);
     if(!win.isDestroyed())setTimeout(reveal,100);
