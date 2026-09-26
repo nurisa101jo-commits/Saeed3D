@@ -83,12 +83,7 @@ export async function transcribeOffline(samples:Float32Array,sampleRate:number,m
     const sherpa=require('sherpa-onnx-node');
     offlineRecognizer=await sherpa.OfflineRecognizer.createAsync({
       featConfig:{sampleRate:16000,featureDim:80},
-      modelConfig:{
-        whisper:{encoder,decoder,language:requestedLanguage,task:'transcribe'},
-        tokens,
-        numThreads:Math.max(1,Math.min(4,(require('node:os').cpus()?.length||2)-1)),
-        provider:'cpu'
-      },
+      modelConfig:{whisper:{encoder,decoder,language:requestedLanguage,task:'transcribe'},tokens,numThreads:Math.max(1,Math.min(4,(require('node:os').cpus()?.length||2)-1)),provider:'cpu'},
       decodingMethod:'greedy_search'
     });
     offlineRecognizerLanguage=requestedLanguage;
@@ -103,21 +98,36 @@ export async function transcribeOffline(samples:Float32Array,sampleRate:number,m
 export function offlineBrain(userMessage:string){
   const t=userMessage.trim().toLocaleLowerCase();
   if(!t)return '';
-  if(/^(مرحبا|اهلا|أهلا|السلام عليكم|سلام عليكم|هاي|هلا|hello|hi|hey)(\s|[!؟?,.]|$)/.test(t))
-    return 'وعليكم السلام! أنا سعيد. أنا أعمل حتى بدون إنترنت في بعض المهام المحلية.';
-  if(/(من أنت|من انت|ما اسمك|شو اسمك|what is your name|who are you)/.test(t))
-    return 'أنا سعيد، رفيقك المكتبي ثلاثي الأبعاد. لدي الآن عقل محلي بسيط يعمل بدون API أو إنترنت لبعض الأوامر والمحادثات الأساسية.';
-  if(/(كيف حالك|كيفك|شلونك|how are you)/.test(t))
-    return 'أنا بخير وجاهز لمساعدتك.';
-  if(/(شكرا|شكرًا|thanks|thank you)/.test(t))
-    return 'العفو!';
-  if(/(الوقت|كم الساعة|what time is it|time now)/.test(t))
-    return 'الوقت الآن هو '+new Intl.DateTimeFormat('ar-JO',{hour:'numeric',minute:'2-digit'}).format(new Date())+'.';
-  if(/(التاريخ|اليوم كم|ما هو اليوم|what day is it|today)/.test(t))
-    return 'اليوم هو '+new Intl.DateTimeFormat('ar-JO',{weekday:'long',year:'numeric',month:'long',day:'numeric'}).format(new Date())+'.';
-  if(/(ماذا تستطيع|شو بتقدر|ساعدني|help|what can you do)/.test(t))
-    return 'أستطيع فهم الكلام محليًا وتحويله إلى نص، والرد على التحيات والهوية والوقت والتاريخ وبعض الأوامر الأساسية. عند توفر الإنترنت وAPI أستطيع استخدام العقل السحابي للمحادثة الأوسع.';
+  if(/^(مرحبا|اهلا|أهلا|السلام عليكم|سلام عليكم|هاي|هلا|hello|hi|hey)(\s|[!؟?,.]|$)/.test(t))return 'وعليكم السلام! أنا سعيد. أنا أعمل حتى بدون إنترنت في بعض المهام المحلية.';
+  if(/(من أنت|من انت|ما اسمك|شو اسمك|what is your name|who are you)/.test(t))return 'أنا سعيد، رفيقك المكتبي ثلاثي الأبعاد. لدي الآن عقل محلي بسيط يعمل بدون API أو إنترنت لبعض الأوامر والمحادثات الأساسية.';
+  if(/(كيف حالك|كيفك|شلونك|how are you)/.test(t))return 'أنا بخير وجاهز لمساعدتك.';
+  if(/(شكرا|شكرًا|thanks|thank you)/.test(t))return 'العفو!';
+  if(/(الوقت|كم الساعة|what time is it|time now)/.test(t))return 'الوقت الآن هو '+new Intl.DateTimeFormat('ar-JO',{hour:'numeric',minute:'2-digit'}).format(new Date())+'.';
+  if(/(التاريخ|اليوم كم|ما هو اليوم|what day is it|today)/.test(t))return 'اليوم هو '+new Intl.DateTimeFormat('ar-JO',{weekday:'long',year:'numeric',month:'long',day:'numeric'}).format(new Date())+'.';
+  if(/(ماذا تستطيع|شو بتقدر|ساعدني|help|what can you do)/.test(t))return 'أستطيع فهم الكلام محليًا وتحويله إلى نص، والرد على التحيات والهوية والوقت والتاريخ وبعض الأوامر الأساسية. عند توفر الإنترنت وAPI أستطيع استخدام العقل السحابي للمحادثة الأوسع.';
   return '';
+}
+
+let offlineTts:any=null;
+let offlineTtsRoot='';
+function wavBuffer(samples:Float32Array,sampleRate:number){
+  const pcm=new Int16Array(samples.length);
+  for(let i=0;i<samples.length;i++){const v=Math.max(-1,Math.min(1,samples[i]));pcm[i]=v<0?v*0x8000:v*0x7fff}
+  const b=Buffer.alloc(44+pcm.byteLength);b.write('RIFF',0);b.writeUInt32LE(36+pcm.byteLength,4);b.write('WAVE',8);b.write('fmt ',12);b.writeUInt32LE(16,16);b.writeUInt16LE(1,20);b.writeUInt16LE(1,22);b.writeUInt32LE(sampleRate,24);b.writeUInt32LE(sampleRate*2,28);b.writeUInt16LE(2,32);b.writeUInt16LE(16,34);b.write('data',36);b.writeUInt32LE(pcm.byteLength,40);Buffer.from(pcm.buffer,pcm.byteOffset,pcm.byteLength).copy(b,44);return b;
+}
+export async function synthesizeOffline(text:string,modelRoot:string,c:any={}){
+  const model=path.join(modelRoot,c.modelFile||'en_US-lessac-medium.onnx');
+  const tokens=path.join(modelRoot,c.tokensFile||'tokens.txt');
+  const dataDir=path.join(modelRoot,c.dataDir||'espeak-ng-data');
+  if(!fs.existsSync(model)||!fs.existsSync(tokens)||!fs.existsSync(dataDir))throw new Error('Offline TTS model is not installed.');
+  if(!offlineTts||offlineTtsRoot!==modelRoot){
+    const sherpa=require('sherpa-onnx-node');
+    offlineTts=new sherpa.OfflineTts({model:{vits:{model,tokens,dataDir}},numThreads:Math.max(1,Math.min(4,(require('node:os').cpus()?.length||2)-1)),provider:'cpu',maxNumSentences:1});
+    offlineTtsRoot=modelRoot;
+  }
+  const gc=new (require('sherpa-onnx-node').GenerationConfig)({sid:Number(c.sid||0),speed:Number(c.speed||1),silenceScale:Number(c.silenceScale||0.2)});
+  const audio=await offlineTts.generateAsync({text,generationConfig:gc});
+  return wavBuffer(audio.samples,audio.sampleRate);
 }
 
 export async function synthesizeOpenAI(text:string,key:string,c:any){
@@ -131,8 +141,9 @@ export async function synthesizeAzure(text:string,key:string,c:any){
   const r=await fetch(endpoint,{method:'POST',headers:{'Ocp-Apim-Subscription-Key':key,'Content-Type':'application/ssml+xml','X-Microsoft-OutputFormat':'audio-24khz-48kbitrate-mono-mp3'},body:ssml});
   if(!r.ok)throw new Error(await read(r)); return Buffer.from(await r.arrayBuffer());
 }
-export async function testTTS(provider:string,key:string|null,c:any):Promise<ProviderStatus>{
+export async function testTTS(provider:string,key:string|null,c:any,modelRoot?:string):Promise<ProviderStatus>{
+  if(provider==='local')try{const b=await synthesizeOffline('OK',modelRoot||'',c);return b.length?{provider,status:'connected',message:'Local voice model is working'}:{provider,status:'error',message:'Empty local audio'};}catch(e){return {provider,status:'error',message:String(e)}}
   if(!key)return {provider,status:'not-configured',message:'Credential is not configured'};
-  try{const audio=provider==='azure'?await synthesizeAzure('OK',key,c):await synthesizeOpenAI('OK',key,c); return audio.length?{provider,status:'connected',message:'Voice service is working'}:{provider,status:'error',message:'Empty audio response'};}
+  try{const audio=provider==='azure'?await synthesizeAzure('OK',key,c):await synthesizeOpenAI('OK',key,c);return audio.length?{provider,status:'connected',message:'Voice service is working'}:{provider,status:'error',message:'Empty audio response'};}
   catch(e){const m=String(e);return {provider,status:/401|403/.test(m)?'unauthorized':/429|quota|credit|billing/i.test(m)?'quota':'error',message:m};}
 }
