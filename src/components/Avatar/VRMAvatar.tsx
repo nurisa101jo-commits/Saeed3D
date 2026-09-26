@@ -13,7 +13,8 @@ export function VRMAvatar(){
     if(!host)return;
 
     const scene=new THREE.Scene();
-    const camera=new THREE.PerspectiveCamera(24,1,0.01,100);
+    const camera=new THREE.PerspectiveCamera(28,1,0.1,100);
+    camera.position.set(0,1.35,3);
     let renderer:THREE.WebGLRenderer;
     try{
       renderer=new THREE.WebGLRenderer({alpha:true,antialias:true,powerPreference:'high-performance'});
@@ -54,8 +55,8 @@ export function VRMAvatar(){
       const h=Math.max(size.y,0.1);
       const fov=THREE.MathUtils.degToRad(camera.fov);
       const dist=(h*0.62)/Math.tan(fov/2);
-      camera.position.set(center.x,center.y+h*0.03,center.z+Math.max(dist,0.5));
-      camera.lookAt(center.x,center.y+h*0.03,center.z);
+      camera.position.set(0,1.35,3);
+      camera.lookAt(0,1.2,0);
       camera.aspect=Math.max(0.1,host.clientWidth/Math.max(1,host.clientHeight));
       camera.updateProjectionMatrix();
     }
@@ -88,9 +89,16 @@ export function VRMAvatar(){
       setStatus('3D error: Saeed VRM could not be loaded.');
     }
 
-    async function loadModel(){
+    function loadDefaultModel(){
       const serial=++loadSerial;
       setStatus(vrm?'Changing Saeed character…':'Loading Saeed 3D…');
+      console.info('[Saeed] loading packaged VRM with the original Build #8 loader path');
+      loader.load('./models/saeed.vrm',(g)=>show(g,serial),undefined,(e)=>fail(e,serial));
+    }
+
+    async function loadCustomModel(){
+      const serial=++loadSerial;
+      setStatus('Changing Saeed character…');
       try{
         const api=(window as any).electronAPI;
         if(!api?.loadAvatarModel)throw new Error('Saeed model IPC is unavailable');
@@ -99,47 +107,17 @@ export function VRMAvatar(){
         const bytes=data instanceof Uint8Array?data:new Uint8Array(data);
         const buffer=new ArrayBuffer(bytes.byteLength);
         new Uint8Array(buffer).set(bytes);
-        console.info('[Saeed] received VRM bytes:',bytes.byteLength);
+        console.info('[Saeed] received custom VRM bytes:',bytes.byteLength);
         loader.parse(buffer,'',(g)=>show(g,serial),(e)=>fail(e,serial));
       }catch(e){fail(e,serial)}
     }
 
-    void loadModel();
+    loadDefaultModel();
 
     const api=(window as any).electronAPI;
-    const removeAvatarChanged=api?.onAvatarChanged?.(()=>{void loadModel()})||(()=>{});
+    const removeAvatarChanged=api?.onAvatarChanged?.(()=>{void loadCustomModel()})||(()=>{});
 
-    const ro=new ResizeObserver(()=>{
-      renderer.setSize(Math.max(1,host.clientWidth),Math.max(1,host.clientHeight));
-      fit();
-    });
-    ro.observe(host);
 
-    let id=0;
-    const loop=()=>{
-      id=requestAnimationFrame(loop);
-      try{
-        if(vrm)vrm.update(1/60);
-        renderer.render(scene,camera);
-      }catch(e){
-        console.error('[Saeed] 3D render loop failed:',e);
-        setStatus('3D error: '+(e instanceof Error?e.message:String(e)));
-        vrm=undefined;
-        try{renderer.dispose()}catch{}
-        cancelAnimationFrame(id);
-      }
-    };
-    loop();
-
-    return()=>{
-      cancelled=true;
-      loadSerial++;
-      removeAvatarChanged();
-      cancelAnimationFrame(id);
-      ro.disconnect();
-      renderer.dispose();
-      if(renderer.domElement.parentElement===host)host.removeChild(renderer.domElement);
-    };
   },[]);
 
   return <div ref={ref} style={{position:'absolute',inset:0}}>
