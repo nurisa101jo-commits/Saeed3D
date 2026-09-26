@@ -23,11 +23,13 @@ declare global {
       getUpdateState(): Promise<any>;
       setClickThrough(v:boolean): Promise<any>;
       onClickThroughState?(cb:(v:boolean)=>void):()=>void;
+      onSpeechTextMode?(cb:(v:boolean)=>void):()=>void;
       assistantTool(q:string): Promise<string>;
       openPath(p:string): Promise<any>;
       setBrainMode(v:'auto'|'local'|'api'): Promise<string>;
       setMicMode(v:'always'|'push-to-talk'|'off'): Promise<string>;
       clearApiKeys(scope?:'all'|'llm'|'stt'|'tts'): Promise<boolean>;
+      chooseCloneVoice(): Promise<{changed:boolean;path?:string}>;
       moveWindowBy(dx:number,dy:number): Promise<boolean>;
       closeSettingsWindow(): Promise<boolean>;
       onRealtimeState(cb:(state:'connecting'|'connected'|'disconnected'|'error',message?:string)=>void): ()=>void;
