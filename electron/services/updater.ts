@@ -14,7 +14,7 @@ function reveal(){if(win&&!win.isDestroyed())revealCompanionWindow(win)}
 function openSettings(){reveal();if(win&&!win.isDestroyed()&&!win.webContents.isDestroyed())win.webContents.send('ui:open-settings')}
 async function changeCharacter(){
   reveal();
-  const result=await dialog.showOpenDialog(win&&!win.isDestroyed()?win:undefined,{title:'Choose Saeed Character',properties:['openFile'],filters:[{name:'VRM Character',extensions:['vrm']}]});
+  const result=await dialog.showOpenDialog(win&&!win.isDestroyed()?win:BrowserWindow.getAllWindows()[0],{title:'Choose Saeed Character',properties:['openFile'],filters:[{name:'VRM Character',extensions:['vrm']}]});
   if(result.canceled||!result.filePaths[0])return;
   const destination=path.join(app.getPath('userData'),'character.vrm');
   fs.copyFileSync(result.filePaths[0],destination);
