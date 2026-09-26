@@ -12,7 +12,7 @@ function emit(){if(win&&!win.isDestroyed()&&win.webContents&&!win.webContents.is
 function set(s:U){state=s;emit();tray?.setToolTip('Saeed — '+(s.message||s.state))}
 function reveal(){if(win&&!win.isDestroyed())revealCompanionWindow(win)}
 function openSettings(){reveal();if(win&&!win.isDestroyed()&&!win.webContents.isDestroyed())win.webContents.send('ui:open-settings')}
-function changeCharacter(){reveal();if(win&&!win.isDestroyed()&&!win.webContents.isDestroyed())void win.webContents.executeJavaScript('window.electronAPI?.changeAvatarModel?.()').catch(()=>{})}
+function changeCharacter(){reveal();if(win&&!win.isDestroyed()&&!win.webContents.isDestroyed())win.webContents.send('ui:change-character')}
 
 export function setupUpdater(w:BrowserWindow){
   win=w;
