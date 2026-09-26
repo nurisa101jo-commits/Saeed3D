@@ -4,12 +4,12 @@ private rec?:MediaRecorder;private pending?:Blob;private analyserCtx?:AudioConte
 
 private async ensureStream(){
   if(this.stream)return;
-  this.stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
+  this.stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:false}});
 }
 async start(onUtterance:(b:Blob)=>Promise<void>){
   this.stopped=false;this.callback=onUtterance;await this.ensureStream();
   const stream=this.stream;if(!stream)throw new Error('Microphone stream is unavailable');const analyser=new AudioContext();this.analyserCtx=analyser;const src=analyser.createMediaStreamSource(stream);const a=analyser.createAnalyser();a.fftSize=1024;src.connect(a);const data=new Uint8Array(a.fftSize);
-  const loop=()=>{if(this.stopped)return;a.getByteTimeDomainData(data);let sum=0;for(const v of data){const d=(v-128)/128;sum+=d*d}const rms=Math.sqrt(sum/data.length);const now=performance.now();if(rms>.035){this.speech=true;this.lastVoice=now;if(!this.recording)this.begin()}else if(this.recording&&this.speech&&now-this.lastVoice>900)this.finish();this.timer=requestAnimationFrame(loop)};loop();
+  const loop=()=>{if(this.stopped)return;a.getByteTimeDomainData(data);let sum=0;for(const v of data){const d=(v-128)/128;sum+=d*d}const rms=Math.sqrt(sum/data.length);const now=performance.now();if(rms>.055){this.speech=true;this.lastVoice=now;if(!this.recording)this.begin()}else if(this.recording&&this.speech&&now-this.lastVoice>900)this.finish();this.timer=requestAnimationFrame(loop)};loop();
 }
 async startManual(onUtterance:(b:Blob)=>Promise<void>){
   this.callback=onUtterance;await this.ensureStream();if(!this.recording)this.begin();
