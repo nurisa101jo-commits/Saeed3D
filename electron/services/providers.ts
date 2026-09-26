@@ -119,7 +119,7 @@ function wavBuffer(samples:Float32Array,sampleRate:number){
   const b=Buffer.alloc(44+pcm.byteLength);b.write('RIFF',0);b.writeUInt32LE(36+pcm.byteLength,4);b.write('WAVE',8);b.write('fmt ',12);b.writeUInt32LE(16,16);b.writeUInt16LE(1,20);b.writeUInt16LE(1,22);b.writeUInt32LE(sampleRate,24);b.writeUInt32LE(sampleRate*2,28);b.writeUInt16LE(2,32);b.writeUInt16LE(16,34);b.write('data',36);b.writeUInt32LE(pcm.byteLength,40);Buffer.from(pcm.buffer,pcm.byteOffset,pcm.byteLength).copy(b,44);return b;
 }
 export async function synthesizeOffline(text:string,modelRoot:string,c:any={}){
-  let model=path.join(modelRoot,c.modelFile||'en_US-lessac-medium.onnx');
+  let model=path.isAbsolute(c.modelFile||'')?String(c.modelFile):path.join(modelRoot,c.modelFile||'en_US-lessac-medium.onnx');
   const fallback=path.join(modelRoot,'en_US-lessac-medium.onnx');
   if((!fs.existsSync(model)||!fs.statSync(model).isFile())&&fs.existsSync(fallback))model=fallback;
   const tokens=path.join(modelRoot,'tokens.txt');
