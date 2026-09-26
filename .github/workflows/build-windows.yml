@@ -36,15 +36,68 @@ jobs:
       - name: Install dependencies
         run: npm install --no-audit --no-fund
 
-      - name: Verify Windows icon
+      - name: Prepare native Windows icon
         shell: pwsh
         run: |
+          $source = "public/icons/saeed.png"
           $icon = "public/icons/saeed.ico"
-          if (!(Test-Path $icon)) { throw "Windows icon is missing: $icon" }
+          $tmpPng = Join-Path $env:RUNNER_TEMP "saeed-256.png"
+
+          if (!(Test-Path $source)) { throw "Source Saeed PNG is missing: $source" }
+
+          Add-Type -AssemblyName System.Drawing
+          $src = [System.Drawing.Image]::FromFile((Resolve-Path $source))
+          try {
+            $bmp = New-Object System.Drawing.Bitmap 256,256
+            try {
+              $g = [System.Drawing.Graphics]::FromImage($bmp)
+              try {
+                $g.Clear([System.Drawing.Color]::Transparent)
+                $g.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
+                $g.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::HighQuality
+                $g.PixelOffsetMode = [System.Drawing.Drawing2D.PixelOffsetMode]::HighQuality
+                $g.DrawImage($src, 0, 0, 256, 256)
+              } finally {
+                $g.Dispose()
+              }
+              $bmp.Save($tmpPng, [System.Drawing.Imaging.ImageFormat]::Png)
+            } finally {
+              $bmp.Dispose()
+            }
+          } finally {
+            $src.Dispose()
+          }
+
+          $pngBytes = [System.IO.File]::ReadAllBytes($tmpPng)
+          if ($pngBytes.Length -lt 1000) { throw "Generated PNG is unexpectedly small: $($pngBytes.Length) bytes" }
+
+          # Build a valid ICO containing the 256x256 PNG payload.
+          # ICO uses width/height 0 to represent 256 pixels.
+          $ms = New-Object System.IO.MemoryStream
+          $bw = New-Object System.IO.BinaryWriter($ms)
+          try {
+            $bw.Write([UInt16]0)
+            $bw.Write([UInt16]1)
+            $bw.Write([UInt16]1)
+            $bw.Write([Byte]0)
+            $bw.Write([Byte]0)
+            $bw.Write([Byte]1)
+            $bw.Write([Byte]0)
+            $bw.Write([UInt16]32)
+            $bw.Write([UInt32]$pngBytes.Length)
+            $bw.Write([UInt32]22)
+            $bw.Write($pngBytes)
+            $bw.Flush()
+            [System.IO.File]::WriteAllBytes($icon, $ms.ToArray())
+          } finally {
+            $bw.Dispose()
+            $ms.Dispose()
+          }
+
+          if (!(Test-Path $icon)) { throw "Windows icon was not generated: $icon" }
           $bytes = (Get-Item $icon).Length
           if ($bytes -lt 1000) { throw "Windows icon is unexpectedly small: $bytes bytes" }
-          Write-Host "Windows icon ready: $bytes bytes"
-
+          Write-Host "Native Windows icon generated: $bytes bytes (256x256 PNG payload)"
 
       - name: Download offline English speech models
         shell: pwsh
@@ -97,7 +150,6 @@ jobs:
           if (!(Test-Path $tokens)) { throw "Packaged offline TTS tokens are missing: $tokens" }
           if (!(Test-Path $data)) { throw "Packaged offline TTS data directory is missing: $data" }
           Write-Host "Offline TTS package verified"
-
 
       - name: Upload Windows installer
         uses: actions/upload-artifact@v4
