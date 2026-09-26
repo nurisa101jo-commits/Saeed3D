@@ -12,6 +12,7 @@ contextBridge.exposeInMainWorld('electronAPI',{
   installUpdate:()=>ipcRenderer.invoke('update:install'),
   getUpdateState:()=>ipcRenderer.invoke('update:state'),
   setClickThrough:(v:boolean)=>ipcRenderer.invoke('system:toggle-clickthrough',v),
+  assistantTool:(q:string)=>ipcRenderer.invoke('assistant:tool',q),
   openPath:(p:string)=>ipcRenderer.invoke('system:open',p),
   setBrainMode:(v:'auto'|'local'|'api')=>ipcRenderer.invoke('settings:brain-mode',v),
   setMicMode:(v:'always'|'push-to-talk'|'off')=>ipcRenderer.invoke('settings:mic-mode',v),
