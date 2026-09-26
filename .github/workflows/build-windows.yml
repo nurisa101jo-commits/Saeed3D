@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build-windows:
@@ -72,8 +72,22 @@ jobs:
       - name: Rebuild native offline STT/TTS module for Electron
         run: npm run rebuild
 
-      - name: Build Windows installer and ZIP
-        run: npm run package
+      - name: Build Windows installer and ZIP and publish release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run package:release
+
+      - name: Verify packaged offline TTS model
+        shell: pwsh
+        run: |
+          $model = "release/win-unpacked/resources/models/offline-tts/vits-piper-en_US-lessac-medium/en_US-lessac-medium.onnx"
+          $tokens = "release/win-unpacked/resources/models/offline-tts/vits-piper-en_US-lessac-medium/tokens.txt"
+          $data = "release/win-unpacked/resources/models/offline-tts/vits-piper-en_US-lessac-medium/espeak-ng-data"
+          if (!(Test-Path $model)) { throw "Packaged offline TTS model is missing: $model" }
+          if (!(Test-Path $tokens)) { throw "Packaged offline TTS tokens are missing: $tokens" }
+          if (!(Test-Path $data)) { throw "Packaged offline TTS data directory is missing: $data" }
+          Write-Host "Offline TTS package verified"
+
 
       - name: Upload Windows installer
         uses: actions/upload-artifact@v4
