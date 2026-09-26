@@ -1,6 +1,7 @@
 import {app,BrowserWindow,Menu,Notification,Tray,nativeImage,dialog} from 'electron';
 import electronUpdater from 'electron-updater';
 import {revealCompanionWindow} from '../windows/companionWindow.js';
+import {openSettingsWindow} from '../windows/settingsWindow.js';
 const {autoUpdater}=electronUpdater;
 import path from 'node:path'; import fs from 'node:fs'; import {fileURLToPath} from 'node:url';
 
@@ -11,7 +12,7 @@ const root=path.dirname(fileURLToPath(import.meta.url));
 function emit(){if(win&&!win.isDestroyed()&&win.webContents&&!win.webContents.isDestroyed())win.webContents.send('update:status',state)}
 function set(s:U){state=s;emit();tray?.setToolTip('Saeed — '+(s.message||s.state))}
 function reveal(){if(win&&!win.isDestroyed())revealCompanionWindow(win)}
-function openSettings(){reveal();if(win&&!win.isDestroyed()&&!win.webContents.isDestroyed())win.webContents.send('ui:open-settings')}
+function openSettings(){reveal();if(win&&!win.isDestroyed())openSettingsWindow(root,win)}
 async function changeCharacter(){
   reveal();
   const result=await dialog.showOpenDialog(win&&!win.isDestroyed()?win:BrowserWindow.getAllWindows()[0],{title:'Choose Saeed Character',properties:['openFile'],filters:[{name:'VRM Character',extensions:['vrm']}]});
@@ -35,7 +36,7 @@ export function setupUpdater(w:BrowserWindow){
       {label:'Start chat',click:()=>{reveal();win?.webContents.send('ui:open-chat')}},
       {label:'Settings',click:()=>openSettings()},
       {label:'Microphone',submenu:[
-        {label:'Always listening',click:()=>win?.webContents.send('settings:mic-mode','always')},
+        {label:'Always listening',click:()=>win?.webContents.send('tray:mic-mode','always')},
         {label:'Push to talk (hold Space)',click:()=>win?.webContents.send('settings:mic-mode','push-to-talk')},
         {label:'Close microphone',click:()=>win?.webContents.send('settings:mic-mode','off')}
       ]},
