@@ -85,6 +85,15 @@ jobs:
           if (!(Test-Path "$ttsModel/espeak-ng-data")) { throw "Offline TTS espeak-ng-data was not downloaded" }
           Get-ChildItem -Path $ttsModel -File | Where-Object { $_.Name -ne "en_US-lessac-medium.onnx" -and $_.Name -ne "tokens.txt" } | Remove-Item -Force
           Get-ChildItem -Path $ttsModel -Directory | Where-Object { $_.Name -ne "espeak-ng-data" } | Remove-Item -Recurse -Force
+          $maleArchive = "$env:RUNNER_TEMP/vits-piper-en_US-ryan-medium.tar.bz2"
+          Invoke-WebRequest -Uri "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-piper-en_US-ryan-medium.tar.bz2" -OutFile $maleArchive
+          tar -xjf $maleArchive -C $ttsDir
+          $maleModel = Join-Path $ttsDir "vits-piper-en_US-ryan-medium"
+          if (!(Test-Path "$maleModel/en_US-ryan-medium.onnx")) { throw "Offline male TTS model was not downloaded" }
+          if (!(Test-Path "$maleModel/tokens.txt")) { throw "Offline male TTS tokens were not downloaded" }
+          if (!(Test-Path "$maleModel/espeak-ng-data")) { throw "Offline male TTS espeak-ng-data was not downloaded" }
+          Get-ChildItem -Path $maleModel -File | Where-Object { $_.Name -ne "en_US-ryan-medium.onnx" -and $_.Name -ne "tokens.txt" } | Remove-Item -Force
+          Get-ChildItem -Path $maleModel -Directory | Where-Object { $_.Name -ne "espeak-ng-data" } | Remove-Item -Recurse -Force
 
       - name: Verify VRM
         run: npm run verify-assets
@@ -146,6 +155,17 @@ jobs:
           if (!(Test-Path $tokens)) { throw "Packaged offline TTS tokens are missing: $tokens" }
           if (!(Test-Path $data)) { throw "Packaged offline TTS data directory is missing: $data" }
           Write-Host "Offline TTS package verified"
+
+      - name: Verify packaged offline male TTS model
+        shell: pwsh
+        run: |
+          $model = "release/win-unpacked/resources/models/offline-tts/vits-piper-en_US-ryan-medium/en_US-ryan-medium.onnx"
+          $tokens = "release/win-unpacked/resources/models/offline-tts/vits-piper-en_US-ryan-medium/tokens.txt"
+          $data = "release/win-unpacked/resources/models/offline-tts/vits-piper-en_US-ryan-medium/espeak-ng-data"
+          if (!(Test-Path $model)) { throw "Packaged male TTS model is missing: $model" }
+          if (!(Test-Path $tokens)) { throw "Packaged male TTS tokens are missing: $tokens" }
+          if (!(Test-Path $data)) { throw "Packaged male TTS data directory is missing: $data" }
+          Write-Host "Offline male TTS package verified"
 
       - name: Upload Windows installer
         uses: actions/upload-artifact@v4
