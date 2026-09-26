@@ -57,9 +57,9 @@ export function Settings(){
     setStatus((v:any)=>({...v,keys:'External APIs disabled. Saeed is using local Brain, STT and TTS.'}));
   }
 
-  async function testLLM(){setStatus((x:any)=>({...x,llm:await window.electronAPI.testProvider({kind:'llm',provider:s.llmProvider,config:s.llm})}));}
-  async function testSTT(){setStatus((x:any)=>({...x,stt:await window.electronAPI.testProvider({kind:'stt',provider:s.sttProvider,config:{model:s.sttModel}})}));}
-  async function testTTS(){setStatus((x:any)=>({...x,tts:await window.electronAPI.testProvider({kind:'tts',provider:s.ttsProvider,config:s.tts})}));}
+  async function testLLM(){const r=await window.electronAPI.testProvider({kind:'llm',provider:s.llmProvider,config:s.llm});setStatus((x:any)=>({...x,llm:r}));}
+  async function testSTT(){const r=await window.electronAPI.testProvider({kind:'stt',provider:s.sttProvider,config:{model:s.sttModel}});setStatus((x:any)=>({...x,stt:r}));}
+  async function testTTS(){const r=await window.electronAPI.testProvider({kind:'tts',provider:s.ttsProvider,config:s.tts});setStatus((x:any)=>({...x,tts:r}));}
 
   const ttsFields=s.ttsProvider==='local'
     ? <><label>Local voice model<input value={s.tts.modelFile||''} onChange={e=>setS({...s,tts:{...s.tts,modelFile:e.target.value}})}/></label><label>Local voice speed<input type="number" min="0.5" max="2" step="0.05" value={s.tts.speed||1} onChange={e=>setS({...s,tts:{...s.tts,speed:Number(e.target.value)}})}/></label><div className="status">The packaged English Sherpa-ONNX voice is used locally. No API or internet is required.</div></>
