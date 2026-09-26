@@ -63,8 +63,9 @@ export function Chat(){
   useEffect(()=>{
     window.electronAPI.getSettings().then(x=>{const m=(x.config?.micMode||(x.config?.alwaysListening===false?'off':'always')) as MicMode;setMicMode(m);});
     const offOpen=window.electronAPI.onOpenChat(()=>setOpen(true));
-    const offMode=window.electronAPI.onMicMode((m)=>{if(m!==micMode){setMicMode(m);void window.electronAPI.setMicMode(m)}});
-    return()=>{offOpen();offMode();void stopListener()};
+    const offMode=window.electronAPI.onMicMode((m)=>setMicMode(m));
+    const offTrayMode=window.electronAPI.onTrayMicMode(async(m)=>{setMicMode(m);await window.electronAPI.setMicMode(m)});
+    return()=>{offOpen();offMode();offTrayMode();void stopListener()};
   },[]);
 
   useEffect(()=>{if(micMode==='always')void startAlways();else void stopListener();},[micMode]);
