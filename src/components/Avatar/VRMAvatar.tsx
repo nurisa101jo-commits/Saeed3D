@@ -71,18 +71,22 @@ export function VRMAvatar(){
           if(!next)throw new Error('VRM plugin did not create a model');
           disposeModel(vrm);
           vrm=next;
-          // Keep the default orientation, but automatically correct VRMs authored facing away from the camera.
-          // The normalized head bone's local -Z is the face-forward direction in standard VRM rigs.
           vrm.scene.rotation.y=0;
+          scene.add(vrm.scene);
+          scene.updateMatrixWorld(true);
+          // Uploaded VRMs can be authored facing either +Z or -Z. Compare the
+          // head's actual world-facing axis with the camera after the model is in the scene.
           const head=vrm.humanoid?.getNormalizedBoneNode('head');
           if(head){
             const forward=new THREE.Vector3();
             const toCamera=new THREE.Vector3();
             head.getWorldDirection(forward);
             toCamera.copy(camera.position).sub(head.getWorldPosition(new THREE.Vector3())).normalize();
-            if(forward.dot(toCamera)<-0.15)vrm.scene.rotation.y=Math.PI;
+            if(forward.dot(toCamera)<0) {
+              vrm.scene.rotation.y=Math.PI;
+              scene.updateMatrixWorld(true);
+            }
           }
-          scene.add(vrm.scene);
           setEmotion(vrm,'neutral');
           fitCamera(vrm);
         },e=>console.error('[Saeed] VRM parse failed',e));
