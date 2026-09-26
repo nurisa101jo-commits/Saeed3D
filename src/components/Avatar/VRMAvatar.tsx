@@ -14,12 +14,15 @@ export function VRMAvatar(){
 
     const scene=new THREE.Scene();
     const camera=new THREE.PerspectiveCamera(24,1,0.01,100);
-    const renderer=new THREE.WebGLRenderer({
-      alpha:true,
-      antialias:true,
-      powerPreference:'high-performance'
-    });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5));
+    let renderer:THREE.WebGLRenderer;
+    try{
+      renderer=new THREE.WebGLRenderer({alpha:true,antialias:true,powerPreference:'high-performance'});
+    }catch(e){
+      console.error('[Saeed] WebGL renderer initialization failed:',e);
+      setStatus('3D unavailable: Windows/WebGL could not initialize.');
+      return;
+    }
+    try{renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5));}catch(e){console.warn('[Saeed] renderer setup failed:',e);setStatus('3D unavailable: renderer setup failed.');renderer.dispose();return;}
     renderer.setClearColor(0x000000,0);
     renderer.outputColorSpace=THREE.SRGBColorSpace;
     renderer.setSize(Math.max(1,host.clientWidth),Math.max(1,host.clientHeight));
