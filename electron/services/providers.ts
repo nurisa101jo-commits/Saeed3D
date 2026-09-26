@@ -1,3 +1,8 @@
+import {createRequire} from 'node:module';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const require=createRequire(import.meta.url);
 type Config=Record<string,any>;
 export type ProviderStatus={provider:string,status:'connected'|'unauthorized'|'quota'|'error'|'not-configured',message:string,httpStatus?:number};
 
@@ -62,6 +67,59 @@ export async function transcribeOpenAI(audio:Buffer,key:string,model='gpt-4o-min
   const r=await fetch('https://api.openai.com/v1/audio/transcriptions',{method:'POST',headers:{Authorization:'Bearer '+key},body:form});
   const t=await read(r); if(!r.ok)throw new Error(t); return json(t)?.text||'';
 }
+
+let offlineRecognizer:any=null;
+let offlineRecognizerLanguage='';
+
+export async function transcribeOffline(samples:Float32Array,sampleRate:number,modelRoot:string,language=''){
+  const encoder=path.join(modelRoot,'tiny-encoder.int8.onnx');
+  const decoder=path.join(modelRoot,'tiny-decoder.int8.onnx');
+  const tokens=path.join(modelRoot,'tiny-tokens.txt');
+  if(!fs.existsSync(encoder)||!fs.existsSync(decoder)||!fs.existsSync(tokens)){
+    throw new Error('Offline speech model is not installed. Saeed cannot use local speech recognition until the offline model is packaged.');
+  }
+  const requestedLanguage=language==='auto'?'':language||'';
+  if(!offlineRecognizer||offlineRecognizerLanguage!==requestedLanguage){
+    const sherpa=require('sherpa-onnx-node');
+    offlineRecognizer=await sherpa.OfflineRecognizer.createAsync({
+      featConfig:{sampleRate:16000,featureDim:80},
+      modelConfig:{
+        whisper:{encoder,decoder,language:requestedLanguage,task:'transcribe'},
+        tokens,
+        numThreads:Math.max(1,Math.min(4,(require('node:os').cpus()?.length||2)-1)),
+        provider:'cpu'
+      },
+      decodingMethod:'greedy_search'
+    });
+    offlineRecognizerLanguage=requestedLanguage;
+  }
+  const stream=offlineRecognizer.createStream();
+  const pcm=samples instanceof Float32Array?samples:new Float32Array(samples);
+  stream.acceptWaveform({samples:pcm,sampleRate});
+  const result=await offlineRecognizer.decodeAsync(stream);
+  return result?.text||offlineRecognizer.getResult(stream)?.text||'';
+}
+
+export function offlineBrain(userMessage:string){
+  const t=userMessage.trim().toLocaleLowerCase();
+  if(!t)return '';
+  if(/^(مرحبا|اهلا|أهلا|السلام عليكم|سلام عليكم|هاي|هلا|hello|hi|hey)\b/.test(t))
+    return 'وعليكم السلام! أنا سعيد. أنا أعمل حتى بدون إنترنت في بعض المهام المحلية.';
+  if(/(من أنت|من انت|ما اسمك|شو اسمك|what is your name|who are you)/.test(t))
+    return 'أنا سعيد، رفيقك المكتبي ثلاثي الأبعاد. لدي الآن عقل محلي بسيط يعمل بدون API أو إنترنت لبعض الأوامر والمحادثات الأساسية.';
+  if(/(كيف حالك|كيفك|شلونك|how are you)/.test(t))
+    return 'أنا بخير وجاهز لمساعدتك.';
+  if(/(شكرا|شكرًا|thanks|thank you)/.test(t))
+    return 'العفو!';
+  if(/(الوقت|كم الساعة|what time is it|time now)/.test(t))
+    return 'الوقت الآن هو '+new Intl.DateTimeFormat('ar-JO',{hour:'numeric',minute:'2-digit'}).format(new Date())+'.';
+  if(/(التاريخ|اليوم كم|ما هو اليوم|what day is it|today)/.test(t))
+    return 'اليوم هو '+new Intl.DateTimeFormat('ar-JO',{weekday:'long',year:'numeric',month:'long',day:'numeric'}).format(new Date())+'.';
+  if(/(ماذا تستطيع|شو بتقدر|ساعدني|help|what can you do)/.test(t))
+    return 'أستطيع فهم الكلام محليًا وتحويله إلى نص، والرد على التحيات والهوية والوقت والتاريخ وبعض الأوامر الأساسية. عند توفر الإنترنت وAPI أستطيع استخدام العقل السحابي للمحادثة الأوسع.';
+  return '';
+}
+
 export async function synthesizeOpenAI(text:string,key:string,c:any){
   const r=await fetch('https://api.openai.com/v1/audio/speech',{method:'POST',headers:{Authorization:'Bearer '+key,'Content-Type':'application/json'},body:JSON.stringify({model:c.model||'gpt-4o-mini-tts',voice:c.voice||'alloy',input:text,response_format:'mp3',instructions:c.instructions})});
   if(!r.ok)throw new Error(await read(r)); return Buffer.from(await r.arrayBuffer());
