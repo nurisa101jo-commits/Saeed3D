@@ -19,7 +19,7 @@ contextBridge.exposeInMainWorld('electronAPI',{
   checkForUpdates:()=>ipcRenderer.invoke('update:check'),
   installUpdate:()=>ipcRenderer.invoke('update:install'),
   getUpdateState:()=>ipcRenderer.invoke('update:state'),
-  setClickThrough:(v:boolean)=>ipcRenderer.invoke('system:toggle-clickthrough',v),onSpeechTextMode:(cb:(v:boolean)=>void)=>{const f:(_:unknown,v:boolean)=>void=(_,v)=>cb(v);ipcRenderer.on('settings:speech-text',f);return()=>ipcRenderer.removeListener('settings:speech-text',f)},onClickThroughState:(cb:(v:boolean)=>void)=>{const f=(_:unknown,v:boolean)=>cb(v);ipcRenderer.on('system:clickthrough-state',f);return()=>ipcRenderer.removeListener('system:clickthrough-state',f)},
+  setClickThrough:(v:boolean)=>ipcRenderer.invoke('system:toggle-clickthrough',v),onSpeechTextMode:(cb:(v:boolean)=>void)=>{const f:(_:unknown,v:boolean)=>void=(_,v)=>cb(v);ipcRenderer.on('settings:speech-text',f);return()=>ipcRenderer.removeListener('settings:speech-text',f)},onVoiceProfile:(cb:(v:string)=>void)=>{const f:(_:unknown,v:string)=>void=(_,v)=>cb(v);ipcRenderer.on('settings:voice-profile',f);return()=>ipcRenderer.removeListener('settings:voice-profile',f)}, onClickThroughState:(cb:(v:boolean)=>void)=>{const f=(_:unknown,v:boolean)=>cb(v);ipcRenderer.on('system:clickthrough-state',f);return()=>ipcRenderer.removeListener('system:clickthrough-state',f)},
   assistantTool:(q:string)=>ipcRenderer.invoke('assistant:tool',q),
   openPath:(p:string)=>ipcRenderer.invoke('system:open',p),
   setBrainMode:(v:'auto'|'local'|'api')=>ipcRenderer.invoke('settings:brain-mode',v),
