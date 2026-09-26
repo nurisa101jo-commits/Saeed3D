@@ -88,7 +88,7 @@ export function VRMAvatar(){
         .then((data:Uint8Array)=>{
           if(cancelled)return;
           const bytes=data instanceof Uint8Array?data:new Uint8Array(data);
-          const buffer=bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength);
+          const buffer=new ArrayBuffer(bytes.byteLength); new Uint8Array(buffer).set(bytes);
           console.info('[Saeed] received VRM bytes:',bytes.byteLength);
           loader.parse(buffer,'',show,fail);
         })
