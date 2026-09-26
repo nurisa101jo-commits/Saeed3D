@@ -1,5 +1,5 @@
 import {app,BrowserWindow,ipcMain,shell} from 'electron';
-import path from 'node:path'; import {fileURLToPath} from 'node:url';
+import path from 'node:path'; import fs from 'node:fs'; import {fileURLToPath} from 'node:url';
 import {createCompanionWindow} from './windows/companionWindow.js';
 import {Database} from './services/database.js'; import {Credentials} from './services/credentials.js';
 import {testLLM,streamLLM,transcribeOpenAI,synthesizeOpenAI,synthesizeAzure,testTTS} from './services/providers.js';
@@ -9,6 +9,7 @@ function keyFor(p:string){return p==='azure'?'azureSpeechKey':p==='openai'?'open
 app.whenReady().then(()=>{
   db=new Database(path.join(app.getPath('userData'),'memory.sqlite3')); creds=new Credentials(db);
   app.setAppUserModelId('com.saeed.desktop'); win=createCompanionWindow(__dirname); setupUpdater(win);
+  ipcMain.handle('avatar:load-model',()=>{const candidates=[path.join(process.resourcesPath,'models','saeed.vrm'),path.join(app.getAppPath(),'dist','models','saeed.vrm'),path.join(__dirname,'../dist/models/saeed.vrm')];for(const p of candidates){if(fs.existsSync(p))return fs.readFileSync(p)}throw new Error('Saeed VRM asset not found');});
   ipcMain.handle('settings:get',()=>({config:db!.getSetting('settings')??{},hasSecrets:Object.fromEntries(['openai','anthropic','gemini','openai-compatible','azure'].map(p=>[p,Boolean(creds!.get(keyFor(p)))]))}));
   ipcMain.handle('settings:save',(_,v:any)=>{const {secrets,...safe}=v||{}; db!.setSetting('settings',safe); for(const [k,val] of Object.entries(secrets||{})){if(typeof val==='string'&&val.trim())creds!.set(keyFor(k),val)} return true});
   ipcMain.handle('provider:test',async(_,v:any)=>{const p=v.provider; const k=creds!.get(keyFor(p)); return p==='azure'||p==='openai-tts'?await testTTS(p==='openai-tts'?'openai':'azure',k,v.config||{}):await testLLM(p,v.config||{},k)});
