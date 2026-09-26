@@ -39,7 +39,7 @@ jobs:
       - name: Prepare native Windows icon
         shell: pwsh
         run: |
-          $source = "public/icons/saeed.png"
+          $source = "public/icons/Saeed.png"
           $icon = "public/icons/saeed.ico"
           if (!(Test-Path $source)) { throw "Source Saeed PNG is missing: $source" }
 
