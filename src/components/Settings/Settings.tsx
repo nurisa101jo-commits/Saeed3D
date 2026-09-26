@@ -14,7 +14,7 @@ export function Settings(){
   <><label>TTS model<input value={s.tts.model||''} onChange={e=>setS({...s,tts:{...s.tts,model:e.target.value}})}/></label><label>TTS voice<input value={s.tts.voice||''} onChange={e=>setS({...s,tts:{...s.tts,voice:e.target.value}})}/></label><label>TTS API key<input type="password" placeholder={has.openai?'Saved securely':'Uses OpenAI key'} value={ttsKey} onChange={e=>setTtsKey(e.target.value)}/></label></>
  );
  return <><button className="settingsButton" onClick={()=>setOpen(!open)}>⚙ Settings</button>{open&&<div className="settingsPanel">
- <h3>Saeed AI providers</h3>
+ <h3>Saeed AI providers</h3>\n <div className="settingActions"><button onClick={async()=>{await window.electronAPI.checkForUpdates()}}>Check for updates</button></div>
  <label>LLM provider<select value={s.llmProvider} onChange={e=>setS({...s,llmProvider:e.target.value})}>{providers.map(([v,n])=><option key={v} value={v}>{n}</option>)}</select></label>
  <label>Model<input value={s.llm.model} onChange={e=>setS({...s,llm:{...s.llm,model:e.target.value}})}/></label>
  {s.llmProvider==='openai-compatible'&&<label>Base URL<input placeholder="https://provider.example/v1" value={s.llm.baseUrl||''} onChange={e=>setS({...s,llm:{...s.llm,baseUrl:e.target.value}})}/></label>}
