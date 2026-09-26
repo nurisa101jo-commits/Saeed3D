@@ -37,7 +37,8 @@ export async function testLLM(provider:string,c:Config,key:string|null):Promise<
   }catch(e){return {provider,status:'error',message:String(e)}}
 }
 
-function messages(r:any){return [...(r.recentMessages||[]).map((m:any)=>({role:m.role==='assistant'?'assistant':'user',content:m.content})),{role:'user',content:r.userMessage}]}
+function attachmentText(r:any){const a=r.attachments||[];if(!a.length)return '';return '\n\nAttachments:\n'+a.map((x:any)=>`- ${x.name} (${x.type||'file'}, ${x.size||0} bytes)${x.text?'\\n'+x.text.slice(0,12000):''}`).join('\n')}
+function messages(r:any){const base=[...(r.recentMessages||[]).map((m:any)=>({role:m.role==='assistant'?'assistant':'user',content:m.content}))];const last=base[base.length-1];if(!last||last.role!=='user'||last.content!==r.userMessage)base.push({role:'user',content:r.userMessage+attachmentText(r)});return base}
 function prompt(r:any){return 'You are Saeed, a helpful desktop AI companion. Be concise, direct and conversational. Do not repeat yourself. Use the available desktop-tool result when one is supplied. Language: '+(r.language||'en')+'\nMemory:\n'+JSON.stringify(r.memoryContext||[])}
 async function* sse(res:Response, parser:(obj:any)=>string|undefined):AsyncIterable<string>{
   if(!res.body) return; const reader=res.body.getReader(); const dec=new TextDecoder(); let buf='';
@@ -45,7 +46,7 @@ async function* sse(res:Response, parser:(obj:any)=>string|undefined):AsyncItera
 }
 export async function* streamLLM(provider:string,c:any,key:string,r:any):AsyncIterable<string>{
   if(provider==='openai'){
-    const res=await fetch((c.baseUrl||'https://api.openai.com/v1')+'/responses',{method:'POST',headers:{Authorization:'Bearer '+key,'Content-Type':'application/json'},body:JSON.stringify({model:c.model||'gpt-5',stream:true,input:[{role:'system',content:prompt(r)},{role:'user',content:r.userMessage}]})});
+    const userContent=[{type:'input_text',text:r.userMessage||'Please inspect the attached files.'},...(r.attachments||[]).flatMap((a:any)=>a.dataBase64?[{type:a.type?.startsWith('image/')?'input_image':'input_file',...(a.type?.startsWith('image/')?{image_url:`data:${a.type};base64,${a.dataBase64}`}:{filename:a.name,file_data:`data:${a.type||'application/octet-stream'};base64,${a.dataBase64}`})}]:[] )]; const res=await fetch((c.baseUrl||'https://api.openai.com/v1')+'/responses',{method:'POST',headers:{Authorization:'Bearer '+key,'Content-Type':'application/json'},body:JSON.stringify({model:c.model||'gpt-5',stream:true,input:[{role:'system',content:prompt(r)},{role:'user',content:userContent}]})});
     if(!res.ok)throw new Error(await read(res)); for await(const x of sse(res,o=>o.type==='response.output_text.delta'?o.delta:undefined))yield x; return;
   }
   if(provider==='anthropic'){
