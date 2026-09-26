@@ -6,8 +6,42 @@ function localTime(){return new Intl.DateTimeFormat(undefined,{dateStyle:'full',
 function findFiles(query:string){const q=query.toLowerCase().trim();const roots=[userHome(),path.join(userHome(),'Desktop'),path.join(userHome(),'Documents'),path.join(userHome(),'Downloads')];const out:string[]=[];const walk=(d:string,n:number)=>{if(n>5||out.length>=50)return;let es:fs.Dirent[]=[];try{es=fs.readdirSync(d,{withFileTypes:true})}catch{return}for(const e of es){if(out.length>=50||e.name.startsWith('.')||e.name==='AppData'||e.name==='node_modules')continue;const p=path.join(d,e.name);if(e.name.toLowerCase().includes(q))out.push(p);if(e.isDirectory())walk(p,n+1)}};for(const root of roots)walk(root,0);return [...new Set(out)]}
 function readUserFile(p:string){const r=path.resolve(p);if(!insideHome(r))throw new Error('Saeed can read files only inside your Windows user profile.');const st=fs.statSync(r);if(!st.isFile())throw new Error('Not a file: '+r);if(st.size>2000000)throw new Error('File is larger than 2 MB.');return fs.readFileSync(r,'utf8')}
 async function openUserPath(t:string){const target=String(t||'').trim();if(/^(my computer|this pc|computer)$/i.test(target))return shell.openPath(process.env.SystemDrive?process.env.SystemDrive+'\\':'C:\\');const p=path.isAbsolute(target)?target:path.join(userHome(),target.replace(/^~[\\/]/,''));if(!insideHome(p))throw new Error('Saeed can open paths only inside your Windows user profile.');if(!fs.existsSync(p))throw new Error('File or folder not found: '+p);const err=await shell.openPath(p);if(err)throw new Error(err);return p}
-async function desktopTool(q:string){const t=String(q||'').trim();if(/^(what time is it|time now|كم الساعة|كم الساعه|الوقت الآن|الوقت الان|ما الوقت|ما هو الوقت)/i.test(t))return 'The current local computer time is '+localTime()+'.';const fm=t.match(/^(?:find|search for|look for|look at|show|list|find files|search files|ابحث عن|ابحث لي عن|جد|انظر الى الملفات|انظر للملفات|اعرض الملفات|اظهر الملفات)\s*(?:file\s+|files\s+|ملف\s+|الملفات\s+)?(.*)$/i);if(fm){const query=(fm[1]||'').trim();const hits=findFiles(query);return hits.length?'I found:\n'+hits.slice(0,20).join('\n'):'I could not find a matching file in Desktop, Documents, Downloads, or your user profile.'}const om=t.match(/^(?:open|افتح)\s+(.+)$/i);if(om){const p=await openUserPath(om[1]);return 'Opened '+(p||om[1])}return ''}
-
+async async function launchApp(target:string){
+  const t=String(target||'').trim().toLowerCase();
+  const apps:Record<string,string>={
+    calculator:'calc.exe',calc:'calc.exe',الحاسبة:'calc.exe',
+    notepad:'notepad.exe',المفكرة:'notepad.exe',
+    paint:'mspaint.exe',الرسام:'mspaint.exe',
+    explorer:'explorer.exe','file explorer':'explorer.exe','مستكشف الملفات':'explorer.exe',
+    taskmanager:'taskmgr.exe','task manager':'taskmgr.exe','مدير المهام':'taskmgr.exe'
+  };
+  const exe=apps[t];
+  if(!exe) return '';
+  const {spawn}=await import('node:child_process');
+  spawn(exe,[],{detached:true,stdio:'ignore'}).unref();
+  return 'Opened '+target+'.';
+}
+async function desktopAction(action:string,target='',query=''){
+  const a=String(action||'').trim().toLowerCase();
+  if(a==='open_app'){const r=await launchApp(target);if(r)return r;throw new Error('I do not have a safe launcher mapping for that application yet.');}
+  if(a==='find_files'){const hits=findFiles(query||target);return hits.length?'I found:\n'+hits.slice(0,20).join('\n'):'I could not find matching files in your user profile.';}
+  if(a==='read_file'){return readUserFile(target);}
+  if(a==='open_path'){return await openUserPath(target);}
+  throw new Error('Unsupported desktop action: '+a);
+}
+async function desktopTool(q:string){
+  const t=String(q||'').trim();
+  if(/^(what time is it|time now|كم الساعة|كم الساعه|الوقت الآن|الوقت الان|ما الوقت|ما هو الوقت)/i.test(t))return 'The current local computer time is '+localTime()+'.';
+  const app=t.match(/^(?:open|launch|start|run|افتح|شغل|شغّل)\\s+(?:the\\s+)?(.+)$/i);
+  if(app){const launched=await launchApp(app[1]);if(launched)return launched;}
+  const fm=t.match(/^(?:find|search for|look for|look at|show|list|find files|search files|ابحث عن|ابحث لي عن|جد|انظر الى الملفات|انظر للملفات|اعرض الملفات|اظهر الملفات)\\s*(?:file\\s+|files\\s+|ملف\\s+|الملفات\\s+)?(.*)$/i);
+  if(fm)return desktopAction('find_files',fm[1],fm[1]);
+  const om=t.match(/^(?:open|افتح)\\s+(.+)$/i);
+  if(om)return desktopAction('open_path',om[1], '');
+  const rm=t.match(/^(?:read|open and read|اقرأ|اقرا)\\s+(?:file\\s+|ملف\\s+)?(.+)$/i);
+  if(rm)return desktopAction('read_file',rm[1],'');
+  return '';
+}
 function collectDirectoryFiles(root:string,out:string[],depth=0){if(depth>4||out.length>=200)return;let es:fs.Dirent[]=[];try{es=fs.readdirSync(root,{withFileTypes:true})}catch{return}for(const e of es){if(e.name.startsWith('.')||e.name==='node_modules')continue;const p=path.join(root,e.name);if(e.isDirectory())collectDirectoryFiles(p,out,depth+1);else out.push(p);if(out.length>=200)return}}
 function attachmentInfo(p:string){const st=fs.statSync(p);const ext=path.extname(p).toLowerCase();const mime=({'.txt':'text/plain','.md':'text/markdown','.json':'application/json','.csv':'text/csv','.html':'text/html','.xml':'application/xml','.ts':'text/plain','.tsx':'text/plain','.js':'text/plain','.jsx':'text/plain','.css':'text/css','.py':'text/plain','.sql':'text/plain','.yaml':'text/plain','.yml':'text/plain','.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg','.webp':'image/webp','.gif':'image/gif','.pdf':'application/pdf','.zip':'application/zip'} as Record<string,string>)[ext]||'application/octet-stream';const result:any={name:path.basename(p),path:p,size:st.size,type:mime};if(st.size<=8*1024*1024)result.dataBase64=fs.readFileSync(p).toString('base64');if(mime.startsWith('text/')||mime==='application/json'||mime==='application/xml'){if(st.size<=2*1024*1024)result.text=fs.readFileSync(p,'utf8')}return result}
 function keyFor(provider:string,kind:'llm'|'stt'|'tts'='llm'){
