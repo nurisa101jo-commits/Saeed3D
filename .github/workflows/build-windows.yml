@@ -10,7 +10,9 @@ permissions:
 
 jobs:
   build-windows:
+    name: Build Windows installer
     runs-on: windows-latest
+    timeout-minutes: 45
     steps:
       - name: Checkout repository with Git LFS
         uses: actions/checkout@v4
@@ -23,10 +25,18 @@ jobs:
         with:
           node-version: 22
 
+      - name: Verify runner and repository
+        shell: pwsh
+        run: |
+          Write-Host "Runner: $env:RUNNER_OS"
+          Write-Host "Commit: $env:GITHUB_SHA"
+          node --version
+          npm --version
+
       - name: Install dependencies
         run: npm install --no-audit --no-fund
 
-      - name: Download offline Arabic-capable speech model
+      - name: Download offline English-default speech model
         shell: pwsh
         run: |
           $dir = "public/models/offline-stt"
@@ -40,8 +50,6 @@ jobs:
           if (!(Test-Path "$model/tiny-tokens.txt")) { throw "Offline Whisper tokens were not downloaded" }
           Get-ChildItem -Path $model -File | Where-Object { $_.Name -notin @("tiny-encoder.int8.onnx","tiny-decoder.int8.onnx","tiny-tokens.txt") } | Remove-Item -Force
           Get-ChildItem -Path $model -Directory | Remove-Item -Recurse -Force
-          Write-Host "Offline STT model ready:"
-          Get-ChildItem -Path $model
 
       - name: Verify VRM
         run: npm run verify-assets
@@ -68,50 +76,3 @@ jobs:
           name: Saeed-Windows-ZIP
           path: release/Saeed-*-x64.zip
           if-no-files-found: error
-
-  release-windows:
-    if: startsWith(github.ref, 'refs/tags/v')
-    runs-on: windows-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Checkout repository with Git LFS
-        uses: actions/checkout@v4
-        with:
-          lfs: true
-          fetch-depth: 1
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
-      - name: Install dependencies
-        run: npm install --no-audit --no-fund
-
-      - name: Download offline Arabic-capable speech model
-        shell: pwsh
-        run: |
-          $dir = "public/models/offline-stt"
-          $archive = "$env:RUNNER_TEMP/sherpa-onnx-whisper-tiny.tar.bz2"
-          New-Item -ItemType Directory -Force -Path $dir | Out-Null
-          Invoke-WebRequest -Uri "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-whisper-tiny.tar.bz2" -OutFile $archive
-          tar -xjf $archive -C $dir
-          $model = Join-Path $dir "sherpa-onnx-whisper-tiny"
-          if (!(Test-Path "$model/tiny-encoder.int8.onnx")) { throw "Offline Whisper encoder was not downloaded" }
-          if (!(Test-Path "$model/tiny-decoder.int8.onnx")) { throw "Offline Whisper decoder was not downloaded" }
-          if (!(Test-Path "$model/tiny-tokens.txt")) { throw "Offline Whisper tokens were not downloaded" }
-          Get-ChildItem -Path $model -File | Where-Object { $_.Name -notin @("tiny-encoder.int8.onnx","tiny-decoder.int8.onnx","tiny-tokens.txt") } | Remove-Item -Force
-          Get-ChildItem -Path $model -Directory | Remove-Item -Recurse -Force
-
-      - name: Verify VRM
-        run: npm run verify-assets
-
-      - name: Rebuild native offline STT module for Electron
-        run: npm run rebuild
-
-      - name: Build and publish GitHub release
-        run: npm run package:release
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-}
