@@ -121,13 +121,13 @@ export async function synthesizeOffline(text:string,modelRoot:string,c:any={}){
   const model=path.join(modelRoot,c.modelFile||'en_US-lessac-medium.onnx');
   const tokens=path.join(modelRoot,c.tokensFile||'tokens.txt');
   const dataDir=path.join(modelRoot,c.dataDir||'espeak-ng-data');
-  if(!fs.existsSync(model)||!fs.existsSync(tokens)||!fs.existsSync(dataDir))throw new Error('Offline TTS model is not installed.');
+  if(!fs.existsSync(model)||!fs.statSync(model).isFile()||!fs.existsSync(tokens)||!fs.statSync(tokens).isFile()||!fs.existsSync(dataDir)||!fs.statSync(dataDir).isDirectory())throw new Error('Offline TTS model is not installed. Expected model files at: '+modelRoot);
   if(!offlineTts||offlineTtsRoot!==modelRoot){
     const sherpa=require('sherpa-onnx-node');
-    offlineTts=new sherpa.OfflineTts({model:{vits:{model,tokens,dataDir}},numThreads:Math.max(1,Math.min(4,(require('node:os').cpus()?.length||2)-1)),provider:'cpu',maxNumSentences:1});
+    offlineTts=new sherpa.OfflineTts({model:{vits:{model,tokens,dataDir},numThreads:Math.max(1,Math.min(4,(require('node:os').cpus()?.length||2)-1)),provider:'cpu'},maxNumSentences:1,silenceScale:0.2});
     offlineTtsRoot=modelRoot;
   }
-  const gc=new (require('sherpa-onnx-node').GenerationConfig)({sid:Number(c.sid||0),speed:Number(c.speed||1),silenceScale:Number(c.silenceScale||0.2)});
+  const GenerationConfig=sherpa.GenerationConfig; const gc=new GenerationConfig({sid:Number(c.sid||0),speed:Number(c.speed||1),silenceScale:Number(c.silenceScale||0.2)});
   const audio=await offlineTts.generateAsync({text,generationConfig:gc});
   return wavBuffer(audio.samples,audio.sampleRate);
 }
