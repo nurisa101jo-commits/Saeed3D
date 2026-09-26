@@ -103,7 +103,7 @@ export async function transcribeOffline(samples:Float32Array,sampleRate:number,m
 export function offlineBrain(userMessage:string){
   const t=userMessage.trim().toLocaleLowerCase();
   if(!t)return '';
-  if(/^(مرحبا|اهلا|أهلا|السلام عليكم|سلام عليكم|هاي|هلا|hello|hi|hey)\b/.test(t))
+  if(/^(مرحبا|اهلا|أهلا|السلام عليكم|سلام عليكم|هاي|هلا|hello|hi|hey)(\s|[!؟?,.]|$)/.test(t))
     return 'وعليكم السلام! أنا سعيد. أنا أعمل حتى بدون إنترنت في بعض المهام المحلية.';
   if(/(من أنت|من انت|ما اسمك|شو اسمك|what is your name|who are you)/.test(t))
     return 'أنا سعيد، رفيقك المكتبي ثلاثي الأبعاد. لدي الآن عقل محلي بسيط يعمل بدون API أو إنترنت لبعض الأوامر والمحادثات الأساسية.';
