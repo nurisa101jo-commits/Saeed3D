@@ -78,7 +78,7 @@ export async function transcribeOffline(samples:Float32Array,sampleRate:number,m
   if(!fs.existsSync(encoder)||!fs.existsSync(decoder)||!fs.existsSync(tokens)){
     throw new Error('Offline speech model is not installed. Saeed cannot use local speech recognition until the offline model is packaged.');
   }
-  const requestedLanguage=language==='auto'?'':language||'';
+  const requestedLanguage=language==='auto'||!language?'ar':language;
   if(!offlineRecognizer||offlineRecognizerLanguage!==requestedLanguage){
     const sherpa=require('sherpa-onnx-node');
     offlineRecognizer=await sherpa.OfflineRecognizer.createAsync({
