@@ -72,7 +72,7 @@ export function VRMAvatar(){
           disposeModel(vrm);
           vrm=next;
           // VRM files are expected to face -Z toward the camera in this scene.
-          vrm.scene.rotation.y=0;
+          vrm.scene.rotation.y=Math.PI;
           scene.add(vrm.scene);
           setEmotion(vrm,'neutral');
           fitCamera(vrm);
