@@ -6,7 +6,7 @@ const {autoUpdater}=electronUpdater;
 import path from 'node:path'; import fs from 'node:fs'; import {fileURLToPath} from 'node:url';
 
 type U={state:string;version?:string;percent?:number;transferred?:number;total?:number;message?:string};
-let tray:Tray|undefined;let win:BrowserWindow|undefined;let state:U={state:'idle'};
+let tray:Tray|undefined;let win:BrowserWindow|undefined;let state:U={state:'idle'};let notifiedVersion='';
 const root=path.dirname(fileURLToPath(import.meta.url));
 
 function emit(){if(win&&!win.isDestroyed()&&win.webContents&&!win.webContents.isDestroyed())win.webContents.send('update:status',state)}
@@ -54,19 +54,9 @@ export function setupUpdater(w:BrowserWindow){
 autoUpdater.autoDownload=true;
   autoUpdater.autoInstallOnAppQuit=true;
   autoUpdater.on('checking-for-update',()=>set({state:'checking',message:'Checking for updates…'}));
-  autoUpdater.on('update-available',i=>{
-    reveal();
-    set({state:'available',version:i.version,message:'Update available: '+i.version});
-    tray?.displayBalloon({title:'Saeed update available',content:'Version '+i.version+' is being downloaded.'});
-    new Notification({title:'Saeed update available',body:'Version '+i.version+' is being downloaded.'}).show();
-  });
+  autoUpdater.on('update-available',i=>{set({state:'available',version:i.version,message:'Update available: '+i.version});});
   autoUpdater.on('download-progress',p=>set({state:'downloading',version:state.version,percent:p.percent,transferred:p.transferred,total:p.total,message:`Downloading ${p.percent.toFixed(0)}% — ${(p.transferred/1048576).toFixed(1)} / ${(p.total/1048576).toFixed(1)} MB`}));
-  autoUpdater.on('update-downloaded',i=>{
-    reveal();
-    set({state:'downloaded',version:i.version,percent:100,message:'Update downloaded and ready to install'});
-    tray?.displayBalloon({title:'Saeed update ready',content:'The update is ready to install.'});
-    new Notification({title:'Saeed update ready',body:'The update is ready to install.'}).show();
-  });
+  autoUpdater.on('update-downloaded',i=>{set({state:'downloaded',version:i.version,percent:100,message:'Update downloaded and ready to install'});if(notifiedVersion!==i.version){notifiedVersion=i.version;reveal();}});
   autoUpdater.on('update-not-available',()=>set({state:'current',message:'Saeed is up to date'}));
   autoUpdater.on('error',e=>{reveal();set({state:'error',message:e.message});setTimeout(()=>{if(state.state==='error')set({state:'idle',message:''})},5000)});
   setTimeout(()=>{if(app.isPackaged)void check()},8000);
