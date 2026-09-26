@@ -18,7 +18,7 @@ export async function testLLM(provider:string,c:Config,key:string|null):Promise<
   if(!key)return {provider,status:'not-configured',message:'API key is not configured'};
   try{
     if(provider==='openai'){
-      const r=await fetch((c.baseUrl||'https://api.openai.com/v1')+'/responses',{method:'POST',headers:{Authorization:'Bearer '+key,'Content-Type':'application/json'},body:JSON.stringify({model:c.model||'gpt-5',input:'Reply with OK only.',max_output_tokens:4})});
+      const r=await fetch((c.baseUrl||'https://api.openai.com/v1')+'/responses',{method:'POST',headers:{Authorization:'Bearer '+key,'Content-Type':'application/json'},body:JSON.stringify({model:c.model||'gpt-5',input:'Reply with OK only.',max_output_tokens:16})});
       const b=await read(r); return r.ok?{provider,status:'connected',message:'API connection is working'}:{provider,status:classify(r.status,b),message:b,httpStatus:r.status};
     }
     if(provider==='anthropic'){
