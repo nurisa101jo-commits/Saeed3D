@@ -36,20 +36,32 @@ jobs:
       - name: Install dependencies
         run: npm install --no-audit --no-fund
 
-      - name: Download offline English-default speech model
+      - name: Download offline English speech models
         shell: pwsh
         run: |
-          $dir = "public/models/offline-stt"
-          $archive = "$env:RUNNER_TEMP/sherpa-onnx-whisper-tiny.tar.bz2"
-          New-Item -ItemType Directory -Force -Path $dir | Out-Null
-          Invoke-WebRequest -Uri "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-whisper-tiny.tar.bz2" -OutFile $archive
-          tar -xjf $archive -C $dir
-          $model = Join-Path $dir "sherpa-onnx-whisper-tiny"
-          if (!(Test-Path "$model/tiny-encoder.int8.onnx")) { throw "Offline Whisper encoder was not downloaded" }
-          if (!(Test-Path "$model/tiny-decoder.int8.onnx")) { throw "Offline Whisper decoder was not downloaded" }
-          if (!(Test-Path "$model/tiny-tokens.txt")) { throw "Offline Whisper tokens were not downloaded" }
-          Get-ChildItem -Path $model -File | Where-Object { $_.Name -notin @("tiny-encoder.int8.onnx","tiny-decoder.int8.onnx","tiny-tokens.txt") } | Remove-Item -Force
-          Get-ChildItem -Path $model -Directory | Remove-Item -Recurse -Force
+          $sttDir = "public/models/offline-stt"
+          $sttArchive = "$env:RUNNER_TEMP/sherpa-onnx-whisper-tiny.tar.bz2"
+          New-Item -ItemType Directory -Force -Path $sttDir | Out-Null
+          Invoke-WebRequest -Uri "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-whisper-tiny.tar.bz2" -OutFile $sttArchive
+          tar -xjf $sttArchive -C $sttDir
+          $sttModel = Join-Path $sttDir "sherpa-onnx-whisper-tiny"
+          if (!(Test-Path "$sttModel/tiny-encoder.int8.onnx")) { throw "Offline Whisper encoder was not downloaded" }
+          if (!(Test-Path "$sttModel/tiny-decoder.int8.onnx")) { throw "Offline Whisper decoder was not downloaded" }
+          if (!(Test-Path "$sttModel/tiny-tokens.txt")) { throw "Offline Whisper tokens were not downloaded" }
+          Get-ChildItem -Path $sttModel -File | Where-Object { $_.Name -notin @("tiny-encoder.int8.onnx","tiny-decoder.int8.onnx","tiny-tokens.txt") } | Remove-Item -Force
+          Get-ChildItem -Path $sttModel -Directory | Remove-Item -Recurse -Force
+
+          $ttsDir = "public/models/offline-tts"
+          $ttsArchive = "$env:RUNNER_TEMP/vits-piper-en_US-lessac-medium.tar.bz2"
+          New-Item -ItemType Directory -Force -Path $ttsDir | Out-Null
+          Invoke-WebRequest -Uri "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-piper-en_US-lessac-medium.tar.bz2" -OutFile $ttsArchive
+          tar -xjf $ttsArchive -C $ttsDir
+          $ttsModel = Join-Path $ttsDir "vits-piper-en_US-lessac-medium"
+          if (!(Test-Path "$ttsModel/en_US-lessac-medium.onnx")) { throw "Offline TTS model was not downloaded" }
+          if (!(Test-Path "$ttsModel/tokens.txt")) { throw "Offline TTS tokens were not downloaded" }
+          if (!(Test-Path "$ttsModel/espeak-ng-data")) { throw "Offline TTS espeak-ng-data was not downloaded" }
+          Get-ChildItem -Path $ttsModel -File | Where-Object { $_.Name -ne "en_US-lessac-medium.onnx" -and $_.Name -ne "tokens.txt" } | Remove-Item -Force
+          Get-ChildItem -Path $ttsModel -Directory | Where-Object { $_.Name -ne "espeak-ng-data" } | Remove-Item -Recurse -Force
 
       - name: Verify VRM
         run: npm run verify-assets
@@ -57,7 +69,7 @@ jobs:
       - name: Typecheck application
         run: npm run typecheck
 
-      - name: Rebuild native offline STT module for Electron
+      - name: Rebuild native offline STT/TTS module for Electron
         run: npm run rebuild
 
       - name: Build Windows installer and ZIP
