@@ -50,7 +50,7 @@ export function setupUpdater(w:BrowserWindow){
   refreshTray();
   win?.on('show',refreshTray);win?.on('hide',refreshTray);
 
-  autoUpdater.allowPrerelease=true;
+  autoUpdater.allowPrerelease=false;
 autoUpdater.autoDownload=true;
   autoUpdater.autoInstallOnAppQuit=true;
   autoUpdater.on('checking-for-update',()=>set({state:'checking',message:'Checking for updates…'}));
