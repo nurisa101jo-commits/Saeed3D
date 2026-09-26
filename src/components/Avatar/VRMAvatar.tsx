@@ -71,8 +71,9 @@ export function VRMAvatar(){
           if(!next)throw new Error('VRM plugin did not create a model');
           disposeModel(vrm);
           vrm=next;
-          // VRM files are expected to face -Z toward the camera in this scene.
-          vrm.scene.rotation.y=Math.PI;
+          // VRM's canonical forward is -Z and the camera is placed on +Z looking toward the model.
+          // Do not rotate the model 180°: that makes the avatar show its back.
+          vrm.scene.rotation.y=0;
           scene.add(vrm.scene);
           setEmotion(vrm,'neutral');
           fitCamera(vrm);
