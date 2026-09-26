@@ -13,6 +13,10 @@ declare global {
       pickAttachments(): Promise<any[]>;
       transcribe(v:{webm:ArrayBuffer;samples:Float32Array;sampleRate:number}): Promise<string>;
       speak(t:string): Promise<string>;
+      realtimeStart(options?:any): Promise<boolean>;
+      realtimeAudio(base64:string): Promise<boolean>;
+      realtimeStop(): Promise<boolean>;
+      realtimeCancel(): Promise<boolean>;
       checkForUpdates(): Promise<any>;
       installUpdate(): Promise<any>;
       getUpdateState(): Promise<any>;
@@ -24,6 +28,14 @@ declare global {
       clearApiKeys(scope?:'all'|'llm'|'stt'|'tts'): Promise<boolean>;
       moveWindowBy(dx:number,dy:number): Promise<boolean>;
       closeSettingsWindow(): Promise<boolean>;
+      onRealtimeState(cb:(state:'connecting'|'connected'|'disconnected'|'error',message?:string)=>void): ()=>void;
+      onRealtimeAudio(cb:(base64:string)=>void): ()=>void;
+      onRealtimeUserDelta(cb:(s:string)=>void): ()=>void;
+      onRealtimeUserFinal(cb:(s:string)=>void): ()=>void;
+      onRealtimeAssistantDelta(cb:(s:string)=>void): ()=>void;
+      onRealtimeAssistantFinal(cb:(s:string)=>void): ()=>void;
+      onRealtimeDone(cb:(s:string)=>void): ()=>void;
+      onRealtimeError(cb:(s:string)=>void): ()=>void;
       onChatDelta(cb:(s:string)=>void): ()=>void;
       onUpdate(cb:(s:any)=>void): ()=>void;
       onOpenSettings(cb:()=>void): ()=>void;
