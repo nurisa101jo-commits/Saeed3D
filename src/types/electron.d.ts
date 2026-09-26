@@ -24,6 +24,7 @@ declare global {
       setClickThrough(v:boolean): Promise<any>;
       onClickThroughState?(cb:(v:boolean)=>void):()=>void;
       onSpeechTextMode?(cb:(v:boolean)=>void):()=>void;
+      onVoiceProfile?(cb:(v:string)=>void):()=>void;
       assistantTool(q:string): Promise<string>;
       openPath(p:string): Promise<any>;
       setBrainMode(v:'auto'|'local'|'api'): Promise<string>;
