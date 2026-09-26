@@ -2,13 +2,13 @@ import {useEffect,useState} from 'react';
 
 type S={
   llmProvider:string;llm:any;sttProvider:'local'|'openai';sttModel:string;sttLanguage:string;
-  ttsProvider:'local'|'openai'|'azure';tts:any;language:string;alwaysListening:boolean;
+  ttsProvider:'local'|'openai'|'azure';tts:any;voiceProfile:'saeed'|'computer'|'female'|'clone';language:string;alwaysListening:boolean;
   micMode:'always'|'push-to-talk'|'off';
   brainMode:'auto'|'local'|'api';showSpeechText:boolean;speakResponses:boolean;
 };
 const defaults:S={
   llmProvider:'openai',llm:{model:'gpt-5'},sttProvider:'local',sttModel:'gpt-4o-mini-transcribe',
-  sttLanguage:'en',ttsProvider:'local',tts:{model:'gpt-4o-mini-tts',voice:'alloy',modelFile:'en_US-lessac-medium.onnx',tokensFile:'tokens.txt',dataDir:'espeak-ng-data',speed:1,sid:0},
+  sttLanguage:'en',ttsProvider:'local',tts:{model:'gpt-4o-mini-tts',voice:'alloy',modelFile:'en_US-lessac-medium.onnx',tokensFile:'tokens.txt',dataDir:'espeak-ng-data',speed:1,sid:0},voiceProfile:'saeed',
   language:'en',alwaysListening:true,micMode:'always',brainMode:'auto',showSpeechText:false,speakResponses:true
 };
 const providers=[['openai','OpenAI / GPT'],['anthropic','Anthropic / Claude'],['gemini','Google / Gemini'],['openai-compatible','OpenAI-compatible']];
@@ -53,7 +53,7 @@ export function Settings({standalone=false}:{standalone?:boolean}){
   async function ok(){await apply();window.electronAPI.closeSettingsWindow();}
   function cancel(){window.electronAPI.closeSettingsWindow();}
 
-  async function clearAllKeys(){
+  async function clearKeys(scope:'all'|'llm'|'stt'|'tts'){await window.electronAPI.clearApiKeys(scope);const x=await window.electronAPI.getSettings();setHas(x.hasSecrets||{});setStatus((v:any)=>({...v,keys:scope==='all'?'All API keys cleared':scope.toUpperCase()+' API keys cleared'}));}\n  async function clearAllKeys(){
     await window.electronAPI.clearApiKeys('all');setLlmKey('');setSttKey('');setTtsKey('');
     const x=await window.electronAPI.getSettings();setHas(x.hasSecrets||{});
     setStatus((v:any)=>({...v,keys:'All API keys have been cleared from secure storage'}));
@@ -93,13 +93,13 @@ export function Settings({standalone=false}:{standalone?:boolean}){
     <hr/><h4>TTS — Text to Speech</h4>
     <label>TTS provider<select value={s.ttsProvider} onChange={e=>setS({...s,ttsProvider:e.target.value as S['ttsProvider']})}><option value="local">Local TTS — offline</option><option value="openai">OpenAI TTS — API</option><option value="azure">Azure Speech — API</option></select></label>
     {ttsFields}<div className="settingActions"><button onClick={testTTS}>Test TTS</button></div><div className="status">TTS: {status.tts?.status||'not tested'} {status.tts?.message||''}</div>
-    <hr/><h4>Microphone & Voice</h4>
+    <hr/><h4>Microphone & Voice</h4>\n    <label>Voice profile<select value={s.voiceProfile} onChange={e=>setS({...s,voiceProfile:e.target.value as S['voiceProfile']})}><option value="saeed">Saeed voice</option><option value="computer">Computer voice</option><option value="female">Female voice</option><option value="clone">My cloned voice</option></select></label>\n    <div className="status">Saeed uses the selected provider/model. My cloned voice becomes active when a compatible clone model is installed and selected.</div>
     <label>Microphone mode<select value={s.micMode} onChange={e=>setS({...s,micMode:e.target.value as S['micMode'],alwaysListening:e.target.value==='always'})}><option value="always">Always listening</option><option value="push-to-talk">Push to talk (hold Space)</option><option value="off">Close microphone</option></select></label>
-    <label><input type="checkbox" checked={s.showSpeechText} onChange={e=>setS({...s,showSpeechText:e.target.checked})}/> Show what I said</label>
+    <label><input type="checkbox" checked={s.showSpeechText} onChange={e=>setS({...s,showSpeechText:e.target.checked})}/> Show speech text</label>
     <label><input type="checkbox" checked={s.speakResponses} onChange={e=>setS({...s,speakResponses:e.target.checked})}/> Speak Saeed's responses</label>
     <label>Language<input value={s.language} onChange={e=>setS({...s,language:e.target.value})}/></label>
     <hr/><h4>API & Character</h4>
-    <div className="settingActions"><button onClick={clearAllKeys}>Clear all API keys</button><button onClick={disableExternal}>Disable external APIs</button></div>
+    <div className="settingActions"><button onClick={()=>clearKeys('llm')}>Clear LLM keys</button><button onClick={()=>clearKeys('stt')}>Clear STT key</button><button onClick={()=>clearKeys('tts')}>Clear TTS keys</button><button onClick={clearAllKeys}>Clear all API keys</button><button onClick={disableExternal}>Disable external APIs</button></div>
     {status.keys&&<div className="status">{status.keys}</div>}
     <div className="settingActions"><button onClick={async()=>{const r=await window.electronAPI.changeAvatarModel();if(r.changed)setStatus((x:any)=>({...x,character:'Character changed'}));}}>Change Character (.vrm)</button><button onClick={async()=>{await apply();await window.electronAPI.checkForUpdates()}}>Check for updates</button></div>
     {status.character&&<div className="status">{status.character}</div>}
