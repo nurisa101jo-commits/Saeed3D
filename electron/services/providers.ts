@@ -62,7 +62,9 @@ export async function* streamLLM(provider:string,c:any,key:string,r:any):AsyncIt
   if(!res.ok)throw new Error(await read(res)); for await(const x of sse(res,o=>o.choices?.[0]?.delta?.content))yield x;
 }
 
-export async function testSTTOpenAI(key:string):Promise<ProviderStatus>{try{const r=await fetch('https://api.openai.com/v1/models',{headers:{Authorization:'Bearer '+key}});const b=await read(r);return r.ok?{provider:'openai',status:'connected',message:'OpenAI STT API key is accepted'}:{provider:'openai',status:classify(r.status,b),message:b,httpStatus:r.status};}catch(e){return{provider:'openai',status:'error',message:String(e)}}}\n\nexport async function transcribeOpenAI(audio:Buffer,key:string,model='gpt-4o-mini-transcribe',language?:string){
+export async function testSTTOpenAI(key:string):Promise<ProviderStatus>{try{const r=await fetch('https://api.openai.com/v1/models',{headers:{Authorization:'Bearer '+key}});const b=await read(r);return r.ok?{provider:'openai',status:'connected',message:'OpenAI STT API key is accepted'}:{provider:'openai',status:classify(r.status,b),message:b,httpStatus:r.status};}catch(e){return{provider:'openai',status:'error',message:String(e)}}}
+
+export async function transcribeOpenAI(audio:Buffer,key:string,model='gpt-4o-mini-transcribe',language?:string){
   const form=new FormData(); const bytes=new Uint8Array(audio); const ab=bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength) as ArrayBuffer; form.append('file',new Blob([ab],{type:'audio/webm'}),'speech.webm'); form.append('model',model); if(language)form.append('language',language);
   const r=await fetch('https://api.openai.com/v1/audio/transcriptions',{method:'POST',headers:{Authorization:'Bearer '+key},body:form});
   const t=await read(r); if(!r.ok)throw new Error(t); return json(t)?.text||'';
