@@ -24,19 +24,30 @@ async function changeCharacter(){
 export function setupUpdater(w:BrowserWindow){
   win=w;
   app.setAppUserModelId('com.saeed.desktop');
-  const iconPath=app.isPackaged?path.join(process.resourcesPath,'icons','saeed.png'):path.join(root,'../../public/icons/saeed.png');
+  const iconPath=app.isPackaged?path.join(process.resourcesPath,'icons','saeed.ico'):path.join(root,'../../public/icons/saeed.ico');
   const icon=nativeImage.createFromPath(iconPath);
   tray=new Tray(icon);
   tray.setToolTip('Saeed');
-  tray.setContextMenu(Menu.buildFromTemplate([
-    {label:'Show Saeed',click:()=>reveal()},
-    {label:'Change Character',click:()=>{void changeCharacter()}},
-    {label:'Settings',click:()=>openSettings()},
-    {label:'Check for updates',click:()=>{reveal();void check()}},
-    {label:'Install downloaded update',enabled:false},
-    {type:'separator'},
-    {label:'Quit Saeed',click:()=>app.quit()}
-  ]));
+  const refreshTray=()=>{
+    const visible=Boolean(win&&!win.isDestroyed()&&win.isVisible());
+    tray?.setContextMenu(Menu.buildFromTemplate([
+      {label:visible?'Hide Saeed':'Show Saeed',click:()=>{if(!win||win.isDestroyed())return;if(win.isVisible())win.hide();else reveal();refreshTray()}},
+      {label:'Start chat',click:()=>{reveal();win?.webContents.send('ui:open-chat')}},
+      {label:'Settings',click:()=>openSettings()},
+      {label:'Microphone',submenu:[
+        {label:'Always listening',click:()=>win?.webContents.send('settings:mic-mode','always')},
+        {label:'Push to talk (hold Space)',click:()=>win?.webContents.send('settings:mic-mode','push-to-talk')},
+        {label:'Close microphone',click:()=>win?.webContents.send('settings:mic-mode','off')}
+      ]},
+      {type:'separator'},
+      {label:'Change Character',click:()=>{void changeCharacter()}},
+      {label:'Check for updates',click:()=>{reveal();void check()}},
+      {type:'separator'},
+      {label:'Quit Saeed',click:()=>app.quit()}
+    ]));
+  };
+  refreshTray();
+  win?.on('show',refreshTray);win?.on('hide',refreshTray);
 
   autoUpdater.autoDownload=true;
   autoUpdater.autoInstallOnAppQuit=true;
@@ -55,7 +66,7 @@ export function setupUpdater(w:BrowserWindow){
     new Notification({title:'Saeed update ready',body:'The update is ready to install.'}).show();
   });
   autoUpdater.on('update-not-available',()=>set({state:'current',message:'Saeed is up to date'}));
-  autoUpdater.on('error',e=>{reveal();set({state:'error',message:e.message})});
+  autoUpdater.on('error',e=>{reveal();set({state:'error',message:e.message});setTimeout(()=>{if(state.state==='error')set({state:'idle',message:''})},5000)});
   setTimeout(()=>{if(app.isPackaged)void check()},8000);
 }
 
@@ -63,7 +74,7 @@ export async function check(){
   reveal();
   set({state:'checking',message:'Checking for updates…'});
   try{await autoUpdater.checkForUpdates()}
-  catch(e){reveal();set({state:'error',message:String(e)})}
+  catch(e){reveal();set({state:'error',message:String(e)});setTimeout(()=>{if(state.state==='error')set({state:'idle',message:''})},5000)}
 }
 export function install(){if(state.state==='downloaded')autoUpdater.quitAndInstall()}
 export function current(){return state}
