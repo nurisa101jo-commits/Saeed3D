@@ -24,6 +24,7 @@ declare global {
       onOpenSettings(cb:()=>void): ()=>void;
       onOpenChat(cb:()=>void): ()=>void;
       onMicMode(cb:(s:'always'|'push-to-talk'|'off')=>void): ()=>void;
+      onTrayMicMode(cb:(s:'always'|'push-to-talk'|'off')=>void): ()=>void;
       onChangeCharacter(cb:()=>void): ()=>void;
       onAvatarChanged(cb:()=>void): ()=>void;
     };
