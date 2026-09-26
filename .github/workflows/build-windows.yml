@@ -101,10 +101,10 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           $version = node -p "require('./package.json').version"
-          $releases = gh release list --repo "$env:GITHUB_REPOSITORY" --limit 100 --json id,tagName,name,isDraft | ConvertFrom-Json
+          $releases = gh api "repos/$env:GITHUB_REPOSITORY/releases?per_page=100" | ConvertFrom-Json
           foreach ($release in $releases) {
-            if ($release.isDraft -and (($release.tagName -eq "v$version") -or ($release.name -match [regex]::Escape($version)))) {
-              Write-Host "Deleting stale draft release: id=$($release.id), tag=$($release.tagName), name=$($release.name)"
+            if ($release.draft -and (($release.tag_name -eq "v$version") -or ($release.name -match [regex]::Escape($version)))) {
+              Write-Host "Deleting stale draft release: id=$($release.id), tag=$($release.tag_name), name=$($release.name)"
               gh api --method DELETE "repos/$env:GITHUB_REPOSITORY/releases/$($release.id)"
               if ($LASTEXITCODE -ne 0) { throw "Failed to delete stale draft release id=$($release.id)" }
             }
