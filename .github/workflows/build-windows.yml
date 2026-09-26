@@ -29,6 +29,9 @@ jobs:
       - name: Verify VRM
         run: npm run verify-assets
 
+      - name: Typecheck application
+        run: npm run typecheck
+
       - name: Build Windows installer and ZIP
         run: npm run package
 
