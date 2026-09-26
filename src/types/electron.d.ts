@@ -7,6 +7,10 @@ declare global {
       saveSettings(v:any): Promise<any>;
       testProvider(v:any): Promise<any>;
       sendChat(v:any): Promise<any>;
+      getChatHistory(limit?:number): Promise<any[]>;
+      saveChatMessage(role:'user'|'assistant',content:string,attachments?:any[]): Promise<boolean>;
+      clearChatHistory(): Promise<boolean>;
+      pickAttachments(): Promise<any[]>;
       transcribe(v:{webm:ArrayBuffer;samples:Float32Array;sampleRate:number}): Promise<string>;
       speak(t:string): Promise<string>;
       checkForUpdates(): Promise<any>;
