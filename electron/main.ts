@@ -20,7 +20,7 @@ if(!gotTheLock){
     app.setAppUserModelId('com.saeed.desktop'); win=createCompanionWindow(__dirname); setupUpdater(win);
     ipcMain.handle('avatar:load-model',()=>{const custom=path.join(app.getPath('userData'),'character.vrm');const candidates=[custom,path.join(process.resourcesPath,'models','saeed.vrm'),path.join(app.getAppPath(),'dist','models','saeed.vrm'),path.join(__dirname,'../dist/models/saeed.vrm')];for(const p of candidates){if(fs.existsSync(p))return fs.readFileSync(p)}throw new Error('Saeed VRM asset not found');});
     ipcMain.handle('avatar:choose-model',async()=>{
-      const result=await dialog.showOpenDialog(win||undefined,{
+      const result=await dialog.showOpenDialog(win ?? BrowserWindow.getAllWindows()[0],{
         title:'Choose Saeed Character',
         properties:['openFile'],
         filters:[{name:'VRM Character',extensions:['vrm']}]
