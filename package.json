@@ -41,7 +41,8 @@
     "vite": "^7.1.7",
     "vitest": "^3.2.4",
     "wait-on": "^8.0.4",
-    "@types/better-sqlite3": "^7.6.12"
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/three": "^0.180.0"
   },
   "build": {
     "appId": "com.saeed.desktop",
