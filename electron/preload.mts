@@ -23,6 +23,7 @@ contextBridge.exposeInMainWorld('electronAPI',{
   onOpenSettings:(cb:()=>void)=>{const f=()=>cb();ipcRenderer.on('ui:open-settings',f);return()=>ipcRenderer.removeListener('ui:open-settings',f)},
   onOpenChat:(cb:()=>void)=>{const f=()=>cb();ipcRenderer.on('ui:open-chat',f);return()=>ipcRenderer.removeListener('ui:open-chat',f)},
   onMicMode:(cb:(s:'always'|'push-to-talk'|'off')=>void)=>{const f=(_:unknown,s:any)=>cb(s);ipcRenderer.on('settings:mic-mode',f);return()=>ipcRenderer.removeListener('settings:mic-mode',f)},
+  onTrayMicMode:(cb:(s:'always'|'push-to-talk'|'off')=>void)=>{const f=(_:unknown,s:any)=>cb(s);ipcRenderer.on('tray:mic-mode',f);return()=>ipcRenderer.removeListener('tray:mic-mode',f)},
   onChangeCharacter:(cb:()=>void)=>{const f=()=>cb();ipcRenderer.on('ui:change-character',f);return()=>ipcRenderer.removeListener('ui:change-character',f)},
   onAvatarChanged:(cb:()=>void)=>{const f=()=>cb();ipcRenderer.on('avatar:model-changed',f);return()=>ipcRenderer.removeListener('avatar:model-changed',f)}
 });
