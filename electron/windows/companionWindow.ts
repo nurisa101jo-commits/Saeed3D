@@ -55,7 +55,7 @@ export function createCompanionWindow(root:string){
       preload:path.join(root,'preload.js'),
       nodeIntegration:false,
       contextIsolation:true,
-      sandbox:true,
+      sandbox:false,
       backgroundThrottling:false
     }
   });
