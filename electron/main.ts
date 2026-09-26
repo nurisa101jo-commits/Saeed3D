@@ -6,7 +6,7 @@ function localTime(){return new Intl.DateTimeFormat(undefined,{dateStyle:'full',
 function findFiles(query:string){const q=query.toLowerCase().trim();const roots=[userHome(),path.join(userHome(),'Desktop'),path.join(userHome(),'Documents'),path.join(userHome(),'Downloads')];const out:string[]=[];const walk=(d:string,n:number)=>{if(n>5||out.length>=50)return;let es:fs.Dirent[]=[];try{es=fs.readdirSync(d,{withFileTypes:true})}catch{return}for(const e of es){if(out.length>=50||e.name.startsWith('.')||e.name==='AppData'||e.name==='node_modules')continue;const p=path.join(d,e.name);if(e.name.toLowerCase().includes(q))out.push(p);if(e.isDirectory())walk(p,n+1)}};for(const root of roots)walk(root,0);return [...new Set(out)]}
 function readUserFile(p:string){const r=path.resolve(p);if(!insideHome(r))throw new Error('Saeed can read files only inside your Windows user profile.');const st=fs.statSync(r);if(!st.isFile())throw new Error('Not a file: '+r);if(st.size>2000000)throw new Error('File is larger than 2 MB.');return fs.readFileSync(r,'utf8')}
 async function openUserPath(t:string){const target=String(t||'').trim();if(/^(my computer|this pc|computer)$/i.test(target))return shell.openPath(process.env.SystemDrive?process.env.SystemDrive+'\\':'C:\\');const p=path.isAbsolute(target)?target:path.join(userHome(),target.replace(/^~[\\/]/,''));if(!insideHome(p))throw new Error('Saeed can open paths only inside your Windows user profile.');if(!fs.existsSync(p))throw new Error('File or folder not found: '+p);const err=await shell.openPath(p);if(err)throw new Error(err);return p}
-async async function launchApp(target:string){
+async function launchApp(target:string){
   const t=String(target||'').trim().toLowerCase();
   const apps:Record<string,string>={
     calculator:'calc.exe',calc:'calc.exe',الحاسبة:'calc.exe',
@@ -32,13 +32,13 @@ async function desktopAction(action:string,target='',query=''){
 async function desktopTool(q:string){
   const t=String(q||'').trim();
   if(/^(what time is it|time now|كم الساعة|كم الساعه|الوقت الآن|الوقت الان|ما الوقت|ما هو الوقت)/i.test(t))return 'The current local computer time is '+localTime()+'.';
-  const app=t.match(/^(?:open|launch|start|run|افتح|شغل|شغّل)\\s+(?:the\\s+)?(.+)$/i);
+  const app=t.match(/^(?:open|launch|start|run|افتح|شغل|شغّل)\s+(?:the\s+)?(.+)$/i);
   if(app){const launched=await launchApp(app[1]);if(launched)return launched;}
-  const fm=t.match(/^(?:find|search for|look for|look at|show|list|find files|search files|ابحث عن|ابحث لي عن|جد|انظر الى الملفات|انظر للملفات|اعرض الملفات|اظهر الملفات)\\s*(?:file\\s+|files\\s+|ملف\\s+|الملفات\\s+)?(.*)$/i);
+  const fm=t.match(/^(?:find|search for|look for|look at|show|list|find files|search files|ابحث عن|ابحث لي عن|جد|انظر الى الملفات|انظر للملفات|اعرض الملفات|اظهر الملفات)\s*(?:file\s+|files\s+|ملف\s+|الملفات\s+)?(.*)$/i);
   if(fm)return desktopAction('find_files',fm[1],fm[1]);
-  const om=t.match(/^(?:open|افتح)\\s+(.+)$/i);
+  const om=t.match(/^(?:open|افتح)\s+(.+)$/i);
   if(om)return desktopAction('open_path',om[1], '');
-  const rm=t.match(/^(?:read|open and read|اقرأ|اقرا)\\s+(?:file\\s+|ملف\\s+)?(.+)$/i);
+  const rm=t.match(/^(?:read|open and read|اقرأ|اقرا)\s+(?:file\s+|ملف\s+)?(.+)$/i);
   if(rm)return desktopAction('read_file',rm[1],'');
   return '';
 }
