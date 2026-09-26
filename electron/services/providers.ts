@@ -113,6 +113,7 @@ export function offlineBrain(userMessage:string){
 
 let offlineTts:any=null;
 let offlineTtsRoot='';
+let offlineTtsModel='';
 function wavBuffer(samples:Float32Array,sampleRate:number){
   const pcm=new Int16Array(samples.length);
   for(let i=0;i<samples.length;i++){const v=Math.max(-1,Math.min(1,samples[i]));pcm[i]=v<0?v*0x8000:v*0x7fff}
@@ -125,10 +126,10 @@ export async function synthesizeOffline(text:string,modelRoot:string,c:any={}){
   const tokens=path.join(modelRoot,'tokens.txt');
   const dataDir=path.join(modelRoot,'espeak-ng-data');
   if(!fs.existsSync(model)||!fs.statSync(model).isFile()||!fs.existsSync(tokens)||!fs.statSync(tokens).isFile()||!fs.existsSync(dataDir)||!fs.statSync(dataDir).isDirectory())throw new Error('Offline TTS model is not installed. Expected '+model+' plus tokens.txt and espeak-ng-data under '+modelRoot);
-  if(!offlineTts||offlineTtsRoot!==modelRoot){
+  if(!offlineTts||offlineTtsRoot!==modelRoot||offlineTtsModel!==model){
     const sherpa=require('sherpa-onnx-node');
     offlineTts=new sherpa.OfflineTts({model:{vits:{model,tokens,dataDir},numThreads:Math.max(1,Math.min(4,(require('node:os').cpus()?.length||2)-1)),provider:'cpu'},maxNumSentences:1,silenceScale:0.2});
-    offlineTtsRoot=modelRoot;
+    offlineTtsRoot=modelRoot;offlineTtsModel=model;
   }
   const GenerationConfig=require('sherpa-onnx-node').GenerationConfig; const gc=new GenerationConfig({sid:Number(c.sid||0),speed:Number(c.speed||1),silenceScale:Number(c.silenceScale||0.2)});
   const audio=await offlineTts.generateAsync({text,generationConfig:gc});
