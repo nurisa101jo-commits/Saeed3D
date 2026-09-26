@@ -14,7 +14,8 @@ declare global {
       transcribe(v:{webm:ArrayBuffer;samples:Float32Array;sampleRate:number}): Promise<string>;
       speak(t:string): Promise<string>;
       realtimeStart(options?:any): Promise<boolean>;
-      realtimeAudio(base64:string): Promise<boolean>;
+      realtimeAudio(base64:string): Promise<boolean>
+      realtimeCommit(): Promise<boolean>;
       realtimeStop(): Promise<boolean>;
       realtimeCancel(): Promise<boolean>;
       checkForUpdates(): Promise<any>;
