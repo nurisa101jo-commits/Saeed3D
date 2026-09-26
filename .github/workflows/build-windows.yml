@@ -57,10 +57,13 @@ jobs:
                 } finally { $graphics.Dispose() }
                 $tmp = "$iconPath.tmp.png"
                 $scaled.Save($tmp, [System.Drawing.Imaging.ImageFormat]::Png)
-                Move-Item -Force $tmp $iconPath
               } finally { $scaled.Dispose() }
             }
           } finally { $source.Dispose() }
+          if (Test-Path "$iconPath.tmp.png") {
+            Remove-Item -Force $iconPath
+            Move-Item "$iconPath.tmp.png" $iconPath
+          }
           $check = [System.Drawing.Image]::FromFile((Resolve-Path $iconPath))
           try {
             if ($check.Width -lt 256 -or $check.Height -lt 256) { throw "Saeed icon must be at least 256x256; found $($check.Width)x$($check.Height)" }
