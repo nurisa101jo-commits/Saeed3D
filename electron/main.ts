@@ -51,7 +51,7 @@ if(!gotTheLock){
       const key=creds!.get('openaiApiKey');
       if(key&&input?.webm)return transcribeOpenAI(Buffer.from(input.webm),key,cfg.sttModel||'gpt-4o-mini-transcribe',cfg.language||undefined);
       if(!input?.samples)throw new Error('No decoded microphone audio was received.');
-      const language=cfg.language||'';
+      const language=cfg.sttLanguage||'auto';
       const candidates=[
         path.join(process.resourcesPath,'models','offline-stt','sherpa-onnx-whisper-tiny'),
         path.join(app.getAppPath(),'dist','models','offline-stt','sherpa-onnx-whisper-tiny'),
