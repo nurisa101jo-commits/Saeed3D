@@ -37,6 +37,7 @@ export function VRMAvatar(){
     loader.register(p=>new VRMLoaderPlugin(p));
     let vrm:VRM|undefined;
     let cancelled=false;
+    let loadSerial=0;
 
     function fit(){
       if(!vrm||!host)return;
@@ -56,8 +57,8 @@ export function VRMAvatar(){
       camera.updateProjectionMatrix();
     }
 
-    const show=(g:any)=>{
-      if(cancelled)return;
+    function show(g:any,serial:number){
+      if(cancelled||serial!==loadSerial)return;
       const loaded=g?.userData?.vrm as VRM|undefined;
       if(!loaded){
         const msg='VRM loaded but the VRM plugin did not create a model.';
@@ -65,6 +66,8 @@ export function VRMAvatar(){
         setStatus('3D error: VRM plugin did not create a model.');
         return;
       }
+
+      if(vrm)scene.remove(vrm.scene);
       vrm=loaded;
       vrm.scene.visible=true;
       vrm.scene.traverse(o=>{o.visible=true});
@@ -74,29 +77,34 @@ export function VRMAvatar(){
       fit();
       setStatus('');
       console.info('[Saeed] VRM rendered successfully');
-    };
+    }
 
-    const fail=(e:unknown)=>{
-      if(cancelled)return;
+    function fail(e:unknown,serial:number){
+      if(cancelled||serial!==loadSerial)return;
       console.error('[Saeed] VRM load failed:',e);
       setStatus('3D error: Saeed VRM could not be loaded.');
-    };
+    }
+
+    async function loadModel(){
+      const serial=++loadSerial;
+      setStatus(vrm?'Changing Saeed character…':'Loading Saeed 3D…');
+      try{
+        const api=(window as any).electronAPI;
+        if(!api?.loadAvatarModel)throw new Error('Saeed model IPC is unavailable');
+        const data=await api.loadAvatarModel();
+        if(cancelled||serial!==loadSerial)return;
+        const bytes=data instanceof Uint8Array?data:new Uint8Array(data);
+        const buffer=new ArrayBuffer(bytes.byteLength);
+        new Uint8Array(buffer).set(bytes);
+        console.info('[Saeed] received VRM bytes:',bytes.byteLength);
+        loader.parse(buffer,'',(g)=>show(g,serial),(e)=>fail(e,serial));
+      }catch(e){fail(e,serial)}
+    }
+
+    void loadModel();
 
     const api=(window as any).electronAPI;
-    if(api?.loadAvatarModel){
-      api.loadAvatarModel()
-        .then((data:Uint8Array)=>{
-          if(cancelled)return;
-          const bytes=data instanceof Uint8Array?data:new Uint8Array(data);
-          const buffer=new ArrayBuffer(bytes.byteLength); new Uint8Array(buffer).set(bytes);
-          console.info('[Saeed] received VRM bytes:',bytes.byteLength);
-          loader.parse(buffer,'',show,fail);
-        })
-        .catch(fail);
-    }else{
-      const url=new URL('./models/saeed.vrm',window.location.href).href;
-      loader.load(url,show,undefined,fail);
-    }
+    const removeAvatarChanged=api?.onAvatarChanged?.(()=>{void loadModel()})||(()=>{});
 
     const ro=new ResizeObserver(()=>{
       renderer.setSize(Math.max(1,host.clientWidth),Math.max(1,host.clientHeight));
@@ -114,6 +122,8 @@ export function VRMAvatar(){
 
     return()=>{
       cancelled=true;
+      loadSerial++;
+      removeAvatarChanged();
       cancelAnimationFrame(id);
       ro.disconnect();
       renderer.dispose();
