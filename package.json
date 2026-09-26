@@ -71,7 +71,7 @@
         "zip"
       ],
       "artifactName": "${productName}-${version}-${arch}.${ext}",
-      "icon": "public/icons/saeed.png"
+      "icon": "public/icons/saeed.ico"
     },
     "nsis": {
       "oneClick": false,
