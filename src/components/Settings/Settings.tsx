@@ -19,6 +19,7 @@ export function Settings({standalone=false}:{standalone?:boolean}){
   const[has,setHas]=useState<any>({});
   const[llmKey,setLlmKey]=useState('');const[sttKey,setSttKey]=useState('');const[ttsKey,setTtsKey]=useState('');
   const[status,setStatus]=useState<any>({});
+  const[tab,setTab]=useState<'ai'|'voice'|'interaction'|'security'>('ai');
 
   useEffect(()=>{
     window.electronAPI.getSettings().then(x=>{
@@ -78,14 +79,15 @@ export function Settings({standalone=false}:{standalone?:boolean}){
 
   const panel=<div className={standalone?'settingsWindow':'settingsPanel'}>
     <div className="settingsHeader"><div><h2>Saeed Settings</h2><div className="settingsSubtitle">Configure Saeed's AI, voice and interaction.</div></div>{standalone&&<button className="windowClose" onClick={cancel}>×</button>}</div>
-    <h4>Brain / LLM</h4>
+    <div className="settingsTabs"><button className={tab==='ai'?'active':''} onClick={()=>setTab('ai')}>AI</button><button className={tab==='voice'?'active':''} onClick={()=>setTab('voice')}>Voice</button><button className={tab==='interaction'?'active':''} onClick={()=>setTab('interaction')}>Interaction</button><button className={tab==='security'?'active':''} onClick={()=>setTab('security')}>Security</button></div>
+    {tab==='ai'&&<div className="settingsTabContent"><h4>Brain / LLM</h4>
     <label>Brain mode<select value={s.brainMode} onChange={e=>setS({...s,brainMode:e.target.value as S['brainMode']})}><option value="auto">Auto — External LLM, then Local Brain</option><option value="local">Local brain only — no external AI</option><option value="api">External LLM only</option></select></label>
     <label>LLM provider<select value={s.llmProvider} onChange={e=>setS({...s,llmProvider:e.target.value})}>{providers.map(([v,n])=><option key={v} value={v}>{n}</option>)}</select></label>
     <label>LLM model<input value={s.llm.model} onChange={e=>setS({...s,llm:{...s.llm,model:e.target.value}})}/></label>
     {s.llmProvider==='openai-compatible'&&<label>LLM Base URL<input placeholder="https://provider.example/v1" value={s.llm.baseUrl||''} onChange={e=>setS({...s,llm:{...s.llm,baseUrl:e.target.value}})}/></label>}
     <label>LLM API key<input type="password" placeholder={has[s.llmProvider]?'Saved securely':'Enter LLM API key'} value={llmKey} onChange={e=>setLlmKey(e.target.value)}/></label>
     <div className="settingActions"><button onClick={testLLM}>Test LLM</button></div><div className="status">LLM: {status.llm?.status||(has[s.llmProvider]?'saved':'not configured')} {status.llm?.message||''}</div>
-    <hr/><h4>STT — Speech to Text</h4>
+    </div>}{tab==='voice'&&<div className="settingsTabContent"><h4>STT — Speech to Text</h4>
     <label>STT provider<select value={s.sttProvider} onChange={e=>setS({...s,sttProvider:e.target.value as S['sttProvider']})}><option value="local">Local Whisper — offline</option><option value="openai">OpenAI STT — API</option></select></label>
     <label>STT model<input value={s.sttModel} onChange={e=>setS({...s,sttModel:e.target.value})}/></label>
     <label>STT language<input value={s.sttLanguage} onChange={e=>setS({...s,sttLanguage:e.target.value})}/></label>
@@ -94,19 +96,19 @@ export function Settings({standalone=false}:{standalone?:boolean}){
     <hr/><h4>TTS — Text to Speech</h4>
     <label>TTS provider<select value={s.ttsProvider} onChange={e=>setS({...s,ttsProvider:e.target.value as S['ttsProvider']})}><option value="local">Local TTS — offline</option><option value="openai">OpenAI TTS — API</option><option value="azure">Azure Speech — API</option></select></label>
     {ttsFields}<div className="settingActions"><button onClick={testTTS}>Test TTS</button></div><div className="status">TTS: {status.tts?.status||'not tested'} {status.tts?.message||''}</div>
-    <hr/><h4>Microphone & Voice</h4>
+    </div>}{tab==='interaction'&&<div className="settingsTabContent"><h4>Microphone & Voice</h4>
     <label>Voice profile<select value={s.voiceProfile} onChange={e=>setS({...s,voiceProfile:e.target.value as S['voiceProfile']})}><option value="saeed">Saeed voice</option><option value="computer">Computer voice</option><option value="female">Female voice</option><option value="clone">My cloned voice</option></select></label>
     <div className="status">Saeed uses the selected provider/model. My cloned voice becomes active when a compatible clone model is installed and selected.</div>
     <label>Microphone mode<select value={s.micMode} onChange={e=>setS({...s,micMode:e.target.value as S['micMode'],alwaysListening:e.target.value==='always'})}><option value="always">Always listening</option><option value="push-to-talk">Push to talk (hold Space)</option><option value="off">Close microphone</option></select></label>
     <label><input type="checkbox" checked={s.showSpeechText} onChange={e=>setS({...s,showSpeechText:e.target.checked})}/> Show speech text</label>
     <label><input type="checkbox" checked={s.speakResponses} onChange={e=>setS({...s,speakResponses:e.target.checked})}/> Speak Saeed's responses</label>
     <label>Language<input value={s.language} onChange={e=>setS({...s,language:e.target.value})}/></label>
-    <hr/><h4>API & Character</h4>
+    </div>}{tab==='security'&&<div className="settingsTabContent"><h4>API & Character</h4>
     <div className="settingActions"><button onClick={()=>clearKeys('llm')}>Clear LLM keys</button><button onClick={()=>clearKeys('stt')}>Clear STT key</button><button onClick={()=>clearKeys('tts')}>Clear TTS keys</button><button onClick={clearAllKeys}>Clear all API keys</button><button onClick={disableExternal}>Disable external APIs</button></div>
     {status.keys&&<div className="status">{status.keys}</div>}
     <div className="settingActions"><button onClick={async()=>{const r=await window.electronAPI.changeAvatarModel();if(r.changed)setStatus((x:any)=>({...x,character:'Character changed'}));}}>Change Character (.vrm)</button><button onClick={async()=>{await apply();await window.electronAPI.checkForUpdates()}}>Check for updates</button></div>
     {status.character&&<div className="status">{status.character}</div>}
-    {standalone&&<div className="settingsFooter"><button onClick={apply}>Apply</button><button className="primary" onClick={ok}>OK</button><button onClick={cancel}>Cancel</button><span>{status.save||''}</span></div>}
+    </div>}{standalone&&<div className="settingsFooter"><button onClick={apply}>Apply</button><button className="primary" onClick={ok}>OK</button><button onClick={cancel}>Cancel</button><span>{status.save||''}</span></div>}
   </div>;
 
   if(standalone)return <div className="settingsPage">{panel}</div>;
