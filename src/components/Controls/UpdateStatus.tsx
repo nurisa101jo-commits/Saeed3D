@@ -22,6 +22,6 @@ export function UpdateStatus(){
     }
   },[]);
   if(error)return <div className="updateStatus"><b>Saeed error</b><span>{error}</span></div>;
-  if(['idle','current'].includes(s.state))return null;
+  if(s.state!=='downloaded')return null;
   return <div className="updateStatus"><b>{s.state==='checking'?'Checking…':s.state==='available'?'Update available':s.state==='downloading'?'Updating…':s.state==='downloaded'?'Update ready':s.state==='error'?'Update error':s.state}</b>{s.total?<span>{s.percent?.toFixed(0)}% · {(s.transferred/1048576).toFixed(1)} / {(s.total/1048576).toFixed(1)} MB</span>:s.message&&<span>{s.message}</span>}{s.state==='downloaded'&&<button onClick={()=>window.electronAPI.installUpdate()}>Restart & install</button>}</div>
 }
