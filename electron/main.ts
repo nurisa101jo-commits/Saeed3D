@@ -4,6 +4,7 @@ import {createCompanionWindow,revealCompanionWindow} from './windows/companionWi
 import {Database} from './services/database.js'; import {Credentials} from './services/credentials.js';
 import {testLLM,streamLLM,transcribeOpenAI,synthesizeOpenAI,synthesizeAzure,testTTS} from './services/providers.js';
 import {setupUpdater,check as checkUpdates,install as installUpdate,current as updateState} from './services/updater.js';
+function keyFor(provider:string){const map:Record<string,string>={openai:'openaiApiKey',anthropic:'anthropicApiKey',gemini:'geminiApiKey','openai-compatible':'openaiCompatibleApiKey',azure:'azureApiKey','openai-tts':'openaiApiKey'};return map[provider]??(provider+'ApiKey');}
 const __dirname=path.dirname(fileURLToPath(import.meta.url)); let win:BrowserWindow|null=null; let db:Database|null=null; let creds:Credentials|null=null;
 
 const gotTheLock=app.requestSingleInstanceLock();
